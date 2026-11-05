@@ -106,7 +106,7 @@ export class Player {
     this.equipWeapon(next);
   }
 
-  update(delta, input, vehicles = [], interactiveStalls = [], elevatorPads = [], blackMarketShops = []) {
+  update(delta, input, vehicles = [], interactiveStalls = [], elevatorPads = [], blackMarketShops = [], propertyManager = null) {
     if (this.isDead) return;
 
     if (this.attackCooldown > 0) this.attackCooldown -= delta;
@@ -122,8 +122,31 @@ export class Player {
     this.handleStallInteraction(input, interactiveStalls);
     this.handleElevatorInteraction(input, elevatorPads);
     this.handleBlackMarketInteraction(input, blackMarketShops);
+    this.handlePropertyInteraction(input, propertyManager);
     this.handleCombat(delta, input);
     this.animateJoints(delta, input);
+  }
+
+  handlePropertyInteraction(input, propertyManager) {
+    if (!propertyManager || !input.wasJustPressed('KeyE')) return;
+    const props = propertyManager.getAllProperties();
+    for (let i = 0; i < props.length; i++) {
+      const p = props[i];
+      const distExt = this.position.distanceTo(p.exteriorPos);
+      const distInt = this.position.distanceTo(p.interiorPos);
+
+      if (distExt < 3.2) {
+        if (!p.isOwned) {
+          propertyManager.buyProperty(p.id, this);
+        } else {
+          propertyManager.enterSafehouse(p, this);
+        }
+        return;
+      } else if (distInt < 3.2 && propertyManager.activeSafehouse === p) {
+        propertyManager.exitSafehouse(p, this);
+        return;
+      }
+    }
   }
 
   handleBlackMarketInteraction(input, blackMarketShops = []) {

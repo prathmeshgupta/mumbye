@@ -134,6 +134,7 @@ export class CityMap {
     this.buildPropsAndStalls();
 
     this.blackMarketShops = this.props.blackMarketShops || [];
+    this.propertyMarkers = this.props.propertyMarkers || [];
   }
 
   // Arabian Sea (Optimized High-Performance Water)
@@ -664,5 +665,10 @@ export class CityMap {
 
     this.props.createStuntRamp(20, -90, 6.0, 8.0, 3.2, 'z');
     this.props.createStuntRamp(90, 30, 6.0, 8.0, 3.5, '-z');
+
+    // Real Estate Safehouses & Garages
+    this.props.createPropertyMarker(55, 0.1, 32, { id: 'dadar_chawl', name: 'Dadar Chawl Flat #4', price: 5000, isOwned: false });
+    this.props.createPropertyMarker(-35, 0.1, -45, { id: 'bandra_villa', name: 'Bandra Sea-Breeze Villa & Garage', price: 25000, isOwned: false });
+    this.props.createPropertyMarker(240, 0.1, -60, { id: 'bkc_penthouse', name: 'AstraCorp Sky-Penthouse Suite', price: 75000, isOwned: false });
   }
 }

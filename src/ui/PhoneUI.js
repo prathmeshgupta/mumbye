@@ -80,6 +80,8 @@ export class PhoneUI {
       this.renderBountiesScreen();
     } else if (this.currentApp === 'stocks') {
       this.renderStocksScreen();
+    } else if (this.currentApp === 'properties') {
+      this.renderPropertiesScreen();
     }
   }
 
@@ -115,6 +117,10 @@ export class PhoneUI {
               <div class="icon-box icon-purple">⚡</div>
               <span>Cheats</span>
             </button>
+            <button class="phone-app-icon" id="app-properties">
+              <div class="icon-box" style="background: #e11d48;">🏠</div>
+              <span>Estates</span>
+            </button>
             <button class="phone-app-icon" id="app-radio">
               <div class="icon-box icon-orange">📻</div>
               <span>Radio</span>
@@ -147,6 +153,10 @@ export class PhoneUI {
     });
     document.getElementById('app-cheats')?.addEventListener('click', () => {
       this.currentApp = 'cheats';
+      this.render();
+    });
+    document.getElementById('app-properties')?.addEventListener('click', () => {
+      this.currentApp = 'properties';
       this.render();
     });
     document.getElementById('app-radio')?.addEventListener('click', () => {
@@ -488,6 +498,92 @@ export class PhoneUI {
         this.game.audioEngine?.playCoinCash();
         this.showCheatAlert(`Bazaar Dividend Received: ₹${profit} (${profitRate >= 0 ? '+' : ''}${Math.round(profitRate * 100)}%)`);
       }, 1500);
+    });
+  }
+
+  renderPropertiesScreen() {
+    const properties = this.game.propertyManager?.getAllProperties() || [];
+    const playerCash = this.game.player?.cash || 0;
+
+    const listHtml = properties.map(p => {
+      const isOwned = p.isOwned;
+      const canAfford = playerCash >= p.price;
+      const perks = [];
+      if (p.perks.hasWeaponsLocker) perks.push('🔫 Gun Locker');
+      if (p.perks.hasRespawnBed) perks.push('🛏️ Respawn Bed');
+      if (p.perks.hasGarage) perks.push('🏎️ Vehicle Bay');
+      if (p.perks.dailyRevenue > 0) perks.push(`💰 +₹${p.perks.dailyRevenue}/min`);
+
+      return `
+        <div class="bounty-card" style="border-left: 3px solid ${isOwned ? '#10b981' : '#f59e0b'};" data-id="${p.id}">
+          <div class="bounty-top">
+            <span class="bounty-title" style="font-size: 13px;">${p.name}</span>
+            <span class="bounty-payout" style="color: ${isOwned ? '#10b981' : '#f59e0b'};">
+              ${isOwned ? 'OWNED' : '₹' + p.price.toLocaleString('en-IN')}
+            </span>
+          </div>
+          <div class="bounty-district">📍 ${p.district} • ${p.type.toUpperCase()}</div>
+          <div class="bounty-desc" style="margin-bottom: 6px;">${p.description}</div>
+          <div style="font-size: 10px; color: #94a3b8; margin-bottom: 8px;">${perks.join(' • ')}</div>
+          <div style="display: flex; gap: 6px;">
+            ${!isOwned ? `
+              <button class="bounty-accept-btn prop-buy-btn" data-id="${p.id}" ${canAfford ? '' : 'disabled style="opacity:0.5; cursor:not-allowed;"'}>
+                ${canAfford ? 'PURCHASE ESTATE' : 'CANNOT AFFORD'}
+              </button>
+            ` : `
+              <button class="bounty-accept-btn prop-gps-btn" data-id="${p.id}" style="background: #10b981;">
+                📍 SET GPS DESTINATION
+              </button>
+            `}
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    this.container.innerHTML = `
+      <div class="phone-frame">
+        <div class="phone-status-bar">
+          <span>MumbAI Real Estate</span>
+          <span>${this.formatGameTime()}</span>
+          <button class="phone-back-btn" id="phone-back">◀ Home</button>
+        </div>
+        <div class="phone-screen phone-list-screen">
+          <div class="phone-section-title">🏠 PROPERTIES & SAFEHOUSE NETWORK</div>
+          <div style="font-size: 10px; color: #cbd5e1; padding: 0 10px 8px;">
+            Cash Balance: <span style="color: #10b981; font-weight: bold;">₹${playerCash.toLocaleString('en-IN')}</span>
+          </div>
+          ${listHtml}
+        </div>
+        <div class="phone-home-bar" id="phone-home-btn"></div>
+      </div>
+    `;
+
+    document.getElementById('phone-back')?.addEventListener('click', () => {
+      this.currentApp = 'home';
+      this.render();
+    });
+    document.getElementById('phone-home-btn')?.addEventListener('click', () => this.close());
+
+    this.container.querySelectorAll('.prop-buy-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-id');
+        const success = this.game.propertyManager?.buyProperty(id, this.game.player);
+        if (success) {
+          this.renderPropertiesScreen();
+        }
+      });
+    });
+
+    this.container.querySelectorAll('.prop-gps-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-id');
+        const prop = this.game.propertyManager?.getProperty(id);
+        if (prop && this.game.missionManager) {
+          this.game.missionManager.customWaypoint = prop.exteriorPos.clone();
+          this.showCheatAlert(`GPS waypoint set to ${prop.name}!`);
+          this.close();
+        }
+      });
     });
   }
 

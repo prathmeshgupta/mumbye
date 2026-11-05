@@ -32,6 +32,12 @@ export class Input {
       look: { active: false, startX: 0, startY: 0, currX: 0, currY: 0, dirX: 0, dirY: 0 }
     };
 
+    // Gamepad Architecture
+    this.gamepadConnected = false;
+    this.gamepadIndex = -1;
+    this.gamepadPrevButtons = {};
+    this.deadzone = 0.18;
+
     this.init();
   }
 
@@ -94,10 +100,40 @@ export class Input {
       this.mouse.isPointerLocked = !!document.pointerLockElement;
     });
 
+    // Gamepad Connection Listeners
+    window.addEventListener('gamepadconnected', (e) => {
+      this.gamepadConnected = true;
+      this.gamepadIndex = e.gamepad.index;
+      window.dispatchEvent(new CustomEvent('mumbye_dialog_message', {
+        detail: { speaker: "Controller Connected", text: `Gamepad ready: ${e.gamepad.id.split('(')[0]}` }
+      }));
+    });
+
+    window.addEventListener('gamepaddisconnected', (e) => {
+      if (e.gamepad.index === this.gamepadIndex) {
+        this.gamepadConnected = false;
+        this.gamepadIndex = -1;
+      }
+    });
+
     // Touch device detection
     if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
       this.touchEnabled = true;
       this.initTouchControls();
+    }
+  }
+
+  playRumble(weak = 0.5, strong = 0.5, duration = 180) {
+    if (!this.gamepadConnected || typeof navigator.getGamepads !== 'function') return;
+    const gamepads = navigator.getGamepads();
+    const gp = gamepads[this.gamepadIndex];
+    if (gp && gp.vibrationActuator && gp.vibrationActuator.playEffect) {
+      gp.vibrationActuator.playEffect('dual-rumble', {
+        startDelay: 0,
+        duration: duration,
+        weakMagnitude: weak,
+        strongMagnitude: strong
+      }).catch(() => {});
     }
   }
 
@@ -141,6 +177,83 @@ export class Input {
     this.isBraking = this.isKeyDown('Space');
     this.isAiming = this.mouse.rightDown;
     this.isFiring = this.mouse.leftDown || this.isKeyDown('KeyF');
+
+    // Poll Gamepad
+    this.pollGamepad();
+  }
+
+  pollGamepad(simulatedPad = null) {
+    let gp = simulatedPad;
+    if (!gp) {
+      if (typeof navigator.getGamepads !== 'function') return;
+      const gamepads = navigator.getGamepads();
+      if (!gamepads) return;
+
+      if (this.gamepadIndex >= 0 && gamepads[this.gamepadIndex]) {
+        gp = gamepads[this.gamepadIndex];
+      } else {
+        for (let i = 0; i < gamepads.length; i++) {
+          if (gamepads[i] && gamepads[i].connected) {
+            gp = gamepads[i];
+            this.gamepadIndex = i;
+            this.gamepadConnected = true;
+            break;
+          }
+        }
+      }
+    }
+
+    if (!gp) return;
+
+    // Analog Thumbsticks (Left Stick: Move, Right Stick: Camera)
+    const lx = gp.axes[0] || 0;
+    const ly = gp.axes[1] || 0;
+    const rx = gp.axes[2] || 0;
+    const ry = gp.axes[3] || 0;
+
+    if (Math.abs(ly) > this.deadzone) {
+      const normY = (ly > 0 ? ly - this.deadzone : ly + this.deadzone) / (1 - this.deadzone);
+      this.moveForward = -normY;
+    }
+    if (Math.abs(lx) > this.deadzone) {
+      const normX = (lx > 0 ? lx - this.deadzone : lx + this.deadzone) / (1 - this.deadzone);
+      this.moveRight = normX;
+    }
+
+    if (Math.abs(rx) > this.deadzone) {
+      this.mouse.dx += rx * 14.0;
+    }
+    if (Math.abs(ry) > this.deadzone) {
+      this.mouse.dy += ry * 14.0;
+    }
+
+    // Button Mappings
+    const isPressed = (idx) => gp.buttons[idx] && (gp.buttons[idx].pressed || gp.buttons[idx].value > 0.4);
+    const wasJustPressedGp = (idx, mappedCode) => {
+      const curr = isPressed(idx);
+      const prev = !!this.gamepadPrevButtons[idx];
+      this.gamepadPrevButtons[idx] = curr;
+      if (curr && !prev) {
+        this.justPressed[mappedCode] = true;
+      }
+    };
+
+    if (isPressed(0)) { this.isJumping = true; this.isBraking = true; } // A Button
+    if (isPressed(5)) this.isSprinting = true; // RB
+    if (isPressed(6)) this.isAiming = true; // LT Trigger
+    if (isPressed(7)) this.isFiring = true; // RT Trigger
+    if (isPressed(1)) this.isFiring = true; // B Button (Melee)
+
+    wasJustPressedGp(2, 'KeyE'); // X Button -> Interact / Enter Vehicle
+    wasJustPressedGp(3, 'KeyQ'); // Y Button -> Weapon Cycle
+    wasJustPressedGp(4, 'KeyR'); // LB -> Cycle Radio
+    wasJustPressedGp(8, 'KeyU'); // Select/Back -> Drone Deploy
+    wasJustPressedGp(9, 'Escape'); // Start -> Pause Menu
+    wasJustPressedGp(10, 'KeyH'); // Left Stick Click -> Horn
+    wasJustPressedGp(12, 'KeyP'); // D-pad Up -> Smartphone
+    wasJustPressedGp(13, 'KeyT'); // D-pad Down -> Taxi Side Hustle
+    wasJustPressedGp(14, 'WheelUp'); // D-pad Left
+    wasJustPressedGp(15, 'WheelDown'); // D-pad Right
   }
 
   resetMouseDeltas() {

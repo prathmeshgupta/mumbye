@@ -10,7 +10,7 @@ export class Minimap {
     this.mapScale = 0.85; // Pixels per meter
   }
 
-  render(playerPos, playerYaw, cityMap, missionTarget, policeOfficers, vehicles) {
+  render(playerPos, playerYaw, cityMap, missionTarget, policeOfficers, vehicles, properties, transitStations) {
     const ctx = this.ctx;
     const w = this.size;
     const h = this.size;
@@ -94,6 +94,45 @@ export class Minimap {
         ctx.beginPath();
         ctx.arc(sx, sz, 3.5, 0, Math.PI * 2);
         ctx.fill();
+      });
+    }
+
+    // Draw Safehouse Properties (Green = Owned, Gold = Available)
+    if (properties) {
+      properties.forEach(prop => {
+        const px = (prop.exteriorPos.x - playerPos.x) * this.mapScale;
+        const pz = (prop.exteriorPos.z - playerPos.z) * this.mapScale;
+        const dist = Math.hypot(px, pz);
+        if (dist < this.radius - 8) {
+          ctx.fillStyle = prop.isOwned ? '#10b981' : '#f59e0b';
+          ctx.beginPath();
+          ctx.rect(px - 3, pz - 2, 6, 5);
+          ctx.fill();
+          ctx.beginPath();
+          ctx.moveTo(px - 4, pz - 2);
+          ctx.lineTo(px, pz - 6);
+          ctx.lineTo(px + 4, pz - 2);
+          ctx.closePath();
+          ctx.fill();
+        }
+      });
+    }
+
+    // Draw Railway Transit Stations (Red Circular Blip with White Rim)
+    if (transitStations) {
+      transitStations.forEach(st => {
+        const sx = (st.platformX - playerPos.x) * this.mapScale;
+        const sz = (st.z - playerPos.z) * this.mapScale;
+        const dist = Math.hypot(sx, sz);
+        if (dist < this.radius - 8) {
+          ctx.fillStyle = '#ef4444';
+          ctx.beginPath();
+          ctx.arc(sx, sz, 4.0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 1.0;
+          ctx.stroke();
+        }
       });
     }
 

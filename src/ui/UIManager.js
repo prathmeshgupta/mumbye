@@ -214,7 +214,7 @@ export class UIManager {
     if (this.minimap) {
       const activeMission = this.game.missionManager.getActiveMission();
       const currentCp = activeMission ? activeMission.checkpoints[this.game.missionManager.currentCheckpointIndex] : null;
-      const missionTarget = currentCp?.target || null;
+      const missionTarget = currentCp?.target || this.game.missionManager.customWaypoint || null;
 
       this.minimap.render(
         player.position,
@@ -222,7 +222,9 @@ export class UIManager {
         this.game.cityMap,
         missionTarget,
         this.game.policeSystem.policeOfficers,
-        this.game.trafficManager.vehicles
+        this.game.trafficManager.vehicles,
+        this.game.propertyManager?.getAllProperties(),
+        this.game.transitSystem?.stations
       );
     }
 
@@ -285,6 +287,44 @@ export class UIManager {
       const pad = elevatorPads[i];
       if (player.position.distanceTo(pad.position) < 2.5) {
         this.setActionPrompt(`[E] Take ${pad.userData.label}`);
+        return;
+      }
+    }
+
+    // Check near Property / Safehouse
+    const propertyManager = this.game.propertyManager;
+    if (propertyManager) {
+      if (propertyManager.activeSafehouse) {
+        this.setActionPrompt(`[E] Exit ${propertyManager.activeSafehouse.name} to Street`);
+        return;
+      }
+      const props = propertyManager.getAllProperties();
+      for (let i = 0; i < props.length; i++) {
+        const p = props[i];
+        if (player.position.distanceTo(p.exteriorPos) < 3.2) {
+          if (!p.isOwned) {
+            this.setActionPrompt(`[E] Buy ${p.name} (₹${p.price.toLocaleString('en-IN')})`);
+          } else {
+            this.setActionPrompt(`[E] Enter Safehouse: ${p.name} (Rest & Restock)`);
+          }
+          return;
+        }
+      }
+    }
+
+    // Check Transit / Suburban Local Train
+    const transit = this.game.transitSystem;
+    if (transit) {
+      if (transit.isPlayerRiding) {
+        this.setActionPrompt("[E] Alight from Train &nbsp;|&nbsp; [Space] Toggle Door-Hanging");
+        return;
+      }
+      const train = transit.suburbanTrain;
+      if (train && Math.abs(player.position.z - train.currentZ) < 35 && Math.abs(player.position.x - train.route.trackX) < 4.8) {
+        this.setActionPrompt("[E] Board Western Railway Suburban Local Train");
+        if (this.game.input?.wasJustPressed('KeyE')) {
+          transit.boardTrain(player);
+        }
         return;
       }
     }

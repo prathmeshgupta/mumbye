@@ -8,6 +8,7 @@ export class CityProps {
     this.interactiveStalls = []; // Vada Pav & Chai stalls
     this.stuntRamps = [];
     this.blackMarketShops = []; // Walk-in chop shops & contraband fences
+    this.propertyMarkers = []; // Real estate safehouses & garages
 
     // Shared Materials Cache
     this.palmTrunkMat = new THREE.MeshStandardMaterial({ color: 0x5a3e28, roughness: 0.9 });
@@ -689,5 +690,62 @@ export class CityProps {
     this.physics.addRamp(pierBox, 'y', 0.2);
 
     return group;
+  }
+
+  // Real Estate Property Signpost & Safehouse Entry Marker
+  createPropertyMarker(x, y, z, propertyDef) {
+    const group = new THREE.Group();
+    group.name = 'PropertyMarker_' + propertyDef.id;
+    group.position.set(x, y, z);
+
+    const postMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.8, roughness: 0.2 });
+    const goldMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.9, roughness: 0.1 });
+
+    // Vertical Stand
+    const post = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.8, 8), postMat);
+    post.position.y = 0.9;
+    group.add(post);
+
+    // Floating Golden Key / Shield Emblem
+    const keyEmblem = new THREE.Mesh(new THREE.TorusGeometry(0.22, 0.05, 8, 16), goldMat);
+    keyEmblem.position.y = 2.0;
+    group.add(keyEmblem);
+    group.emblem = keyEmblem;
+
+    // Glowing Sign Board
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 128;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(0, 0, 256, 128);
+    ctx.strokeStyle = '#f59e0b';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(4, 4, 248, 120);
+
+    ctx.font = 'bold 22px Montserrat, sans-serif';
+    ctx.fillStyle = '#f59e0b';
+    ctx.textAlign = 'center';
+    ctx.fillText(propertyDef.isOwned ? "SAFEHOUSE" : "FOR SALE", 128, 45);
+
+    ctx.font = '16px Montserrat, sans-serif';
+    ctx.fillStyle = '#f8fafc';
+    ctx.fillText(propertyDef.isOwned ? "OWNED ✓" : `₹ ${propertyDef.price.toLocaleString('en-IN')}`, 128, 85);
+
+    const tex = new THREE.CanvasTexture(canvas);
+    const sign = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.65, 0.06), new THREE.MeshBasicMaterial({ map: tex }));
+    sign.position.y = 1.45;
+    group.add(sign);
+
+    this.scene.add(group);
+
+    const markerData = {
+      position: new THREE.Vector3(x, y, z),
+      propertyId: propertyDef.id,
+      property: propertyDef,
+      group
+    };
+    this.propertyMarkers.push(markerData);
+    return markerData;
   }
 }

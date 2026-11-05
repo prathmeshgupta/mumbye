@@ -1,4 +1,6 @@
 // MUMBYE: MAXIMUM CITY - Comprehensive Pause, Settings & Map System
+import * as THREE from 'three';
+
 export class PauseMenu {
   constructor(game) {
     this.game = game;
@@ -176,9 +178,12 @@ export class PauseMenu {
               <li><span class="dot dot-red"></span> <b>CST Railway Corridor:</b> Moving suburban local trains</li>
               <li><span class="dot dot-green"></span> <b>Metro General Hospital:</b> Emergency medical facility</li>
               <li><span class="dot dot-gold"></span> <b>Colaba Freight Docks:</b> Shipping containers & maritime cranes</li>
+              <li><span class="dot dot-green"></span> <b>🏠 Safehouses:</b> Weapon lockers, beds & passive dividends</li>
+              <li><span class="dot dot-red"></span> <b>🚆 Suburban Railway:</b> CST & Dadar Local Train Stations</li>
               <li><span class="dot dot-vada"></span> <b>Vada Pav Tapris:</b> Steaming food stalls (Restore 100 HP)</li>
             </ul>
             <div class="map-hint">💡 Blinking white arrow represents Kabir's current position and heading.</div>
+            <div class="map-hint" style="margin-top: 6px; color: #38bdf8;">📍 Click anywhere on the map to set or clear a custom GPS Destination Waypoint!</div>
           </div>
           <div class="map-canvas-wrapper">
             <canvas id="full-map-canvas" width="600" height="420"></canvas>
@@ -247,6 +252,13 @@ export class PauseMenu {
             <div class="s-row">
               <label>Radio Stations & Music</label>
               <input type="range" id="vol-music" min="0" max="100" value="70" class="s-slider">
+            </div>
+            <div class="s-row">
+              <label>Procedural RJ Voice & Breaking News</label>
+              <select id="setting-broadcast-speech" class="s-select">
+                <option value="true" ${this.game.broadcastSystem?.speechEnabled ? 'selected' : ''}>Enabled (Procedural RJ & News Flashes)</option>
+                <option value="false" ${!this.game.broadcastSystem?.speechEnabled ? 'selected' : ''}>Muted (Music Only)</option>
+              </select>
             </div>
           </div>
           <div class="settings-card">
@@ -340,6 +352,29 @@ export class PauseMenu {
             <div class="ctrl-row"><span>M</span> Open DLC & Mod Manager</div>
             <div class="ctrl-row"><span>B</span> "Bhai Time" Bullet Time (Action DLC)</div>
             <div class="ctrl-row"><span>Arrow Keys</span> Pan Camera Independently</div>
+          </div>
+          <div class="ctrl-group" style="grid-column: 1 / -1; background: rgba(30, 41, 59, 0.6); border: 1px solid #38bdf8; border-radius: 8px; padding: 12px; margin-top: 10px;">
+            <h4 style="color: #38bdf8; margin-top: 0; display: flex; align-items: center; gap: 8px;">
+              <span>🎮 GAMEPAD / CONTROLLER (Xbox / PlayStation / DualShock / Generic USB)</span>
+              <span style="font-size: 10px; background: #0284c7; color: #fff; padding: 2px 8px; border-radius: 10px;">AUTO-DETECTED</span>
+            </h4>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 8px; font-size: 11px;">
+              <div class="ctrl-row"><span>Left Analog Stick</span> Move Kabir / Steer Vehicle</div>
+              <div class="ctrl-row"><span>Right Analog Stick</span> Free Camera Look (Analog Pan)</div>
+              <div class="ctrl-row"><span>A / ✕ (Cross)</span> Jump on foot / Handbrake in vehicle</div>
+              <div class="ctrl-row"><span>B / ◯ (Circle)</span> Melee Punch / Attack</div>
+              <div class="ctrl-row"><span>X / ▢ (Square)</span> Enter/Exit Vehicle / Board Local Train / Safehouse</div>
+              <div class="ctrl-row"><span>Y / △ (Triangle)</span> Cycle Weapons (Fists → Pistol → AK → Rocket)</div>
+              <div class="ctrl-row"><span>Right Trigger (RT/R2)</span> Fire Weapon / Accelerate Vehicle</div>
+              <div class="ctrl-row"><span>Left Trigger (LT/L2)</span> Over-Shoulder Aim / Reverse & Brake</div>
+              <div class="ctrl-row"><span>Left Bumper (LB/L1)</span> Cycle Radio Stations / Horn</div>
+              <div class="ctrl-row"><span>Right Bumper (RB/R1)</span> Sprint on foot / Nitro Boost in car</div>
+              <div class="ctrl-row"><span>D-Pad Down / Up</span> Toggle Bambaiya Smartphone</div>
+              <div class="ctrl-row"><span>Start / Options</span> Toggle Pause & Settings Menu</div>
+            </div>
+            <div style="margin-top: 8px; font-size: 10px; color: #94a3b8;">
+              💡 Automatic Plug & Play detection with Dual Haptic Rumble Feedback on collision and weapon fire.
+            </div>
           </div>
         </div>
       `;
@@ -442,6 +477,66 @@ export class PauseMenu {
       ctx.fillText(lm.name, sx + 6, sy + 3);
     });
 
+    // Draw Safehouses & Real Estate Properties
+    if (this.game.propertyManager) {
+      this.game.propertyManager.getAllProperties().forEach(prop => {
+        const sx = toScreenX(prop.exteriorPos.x);
+        const sy = toScreenY(prop.exteriorPos.z);
+        const isOwned = prop.isOwned;
+
+        ctx.fillStyle = isOwned ? '#10b981' : '#f59e0b';
+        ctx.beginPath();
+        ctx.arc(sx, sy, 5.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        ctx.font = 'bold 9px sans-serif';
+        ctx.fillStyle = isOwned ? '#34d399' : '#fbbf24';
+        ctx.fillText(`🏠 ${prop.name} (${isOwned ? 'OWNED' : '₹' + prop.price.toLocaleString('en-IN')})`, sx + 8, sy + 3);
+      });
+    }
+
+    // Draw Railway Transit Stations
+    if (this.game.transitSystem?.stations) {
+      this.game.transitSystem.stations.forEach(st => {
+        const sx = toScreenX(st.platformX);
+        const sy = toScreenY(st.z);
+
+        ctx.fillStyle = '#ef4444';
+        ctx.beginPath();
+        ctx.arc(sx, sy, 5.0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        ctx.font = 'bold 9px sans-serif';
+        ctx.fillStyle = '#fca5a5';
+        ctx.fillText(`🚆 ${st.name}`, sx + 8, sy + 3);
+      });
+    }
+
+    // Draw Custom GPS Waypoint (if active)
+    const customWp = this.game.missionManager?.customWaypoint;
+    if (customWp) {
+      const cx = toScreenX(customWp.x);
+      const cy = toScreenY(customWp.z);
+
+      ctx.fillStyle = '#06b6d4';
+      ctx.beginPath();
+      ctx.arc(cx, cy, 7.0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2.0;
+      ctx.stroke();
+
+      ctx.font = 'bold 10px sans-serif';
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillText('📍 GPS DESTINATION', cx + 10, cy + 3);
+    }
+
     // Draw Player Blip
     const playerPos = this.game.player?.position;
     if (playerPos) {
@@ -467,6 +562,27 @@ export class PauseMenu {
 
       ctx.restore();
     }
+
+    // Interactive Map Click: Set / Clear GPS Waypoint
+    canvas.onclick = (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+
+      const wx = (mouseX - originX) / mapScale;
+      const wz = (mouseY - originY) / mapScale;
+
+      if (this.game.missionManager) {
+        if (this.game.missionManager.customWaypoint &&
+            Math.hypot(this.game.missionManager.customWaypoint.x - wx, this.game.missionManager.customWaypoint.z - wz) < 20) {
+          this.game.missionManager.customWaypoint = null;
+        } else {
+          this.game.missionManager.customWaypoint = new THREE.Vector3(wx, 0.5, wz);
+          this.game.audioEngine?.playShopChime?.();
+        }
+        this.renderFullMapCanvas();
+      }
+    };
   }
 
   bindGraphicsHandlers() {
@@ -515,6 +631,12 @@ export class PauseMenu {
     document.getElementById('setting-radio-station')?.addEventListener('change', (e) => {
       const idx = parseInt(e.target.value);
       ae?.setRadioStation(idx);
+    });
+
+    document.getElementById('setting-broadcast-speech')?.addEventListener('change', (e) => {
+      if (this.game.broadcastSystem) {
+        this.game.broadcastSystem.speechEnabled = e.target.value === 'true';
+      }
     });
   }
 

@@ -12,13 +12,15 @@ import { Player } from '../entities/Player.js';
 import { TrafficManager } from '../entities/TrafficManager.js';
 import { PedestrianManager } from '../entities/PedestrianManager.js';
 import { PoliceSystem } from '../entities/PoliceSystem.js';
-import { TrainSystem } from '../entities/TrainSystem.js';
+import { TransitSystem } from '../entities/TransitSystem.js';
 import { MissionManager } from '../missions/MissionManager.js';
 import { DLCManager } from '../dlc/DLCManager.js';
 import { UIManager } from '../ui/UIManager.js';
 import { Drone } from '../entities/Drone.js';
 import { Helicopter } from '../entities/Helicopter.js';
 import { Speedboat } from '../entities/Speedboat.js';
+import { PropertyManager } from '../world/PropertyManager.js';
+import { BroadcastSystem } from './BroadcastSystem.js';
 
 // Bundled DLCs
 import { BandraDriftDLC } from '../dlc/bundled/BandraDriftDLC.js';
@@ -71,7 +73,9 @@ export class Engine {
     this.pedestrianManager.spawnInitial(this.cityMap.sidewalkNodes);
 
     this.policeSystem = new PoliceSystem(this.scene, this.physics, this.audioEngine, this.particleSystem);
-    this.trainSystem = new TrainSystem(this.scene, this.audioEngine);
+    this.transitSystem = new TransitSystem(this.scene, this.physics, this.audioEngine);
+    this.propertyManager = new PropertyManager(this);
+    this.broadcastSystem = new BroadcastSystem(this, this.audioEngine);
 
     // SkyEye Drone (Deployable with 'U' or Phone App)
     const droneMesh = this.factory.createDrone();
@@ -241,15 +245,17 @@ export class Engine {
       setTimeout(() => {
         const fee = Math.min(this.player.cash, 100);
         this.player.cash -= fee;
-        // Respawn outside Metro General Hospital (X: 20, Z: -30)
-        this.player.respawn(20, -30);
+        // Respawn at Safehouse or Metro General Hospital
+        const respawnPos = this.propertyManager.getRespawnPosition();
+        this.player.respawn(respawnPos.x, respawnPos.z);
         this.cameraManager.yaw = 0;
         this.cameraManager.pitch = 0.25;
         this.cameraManager.setMode('on_foot');
+        const isSafehouse = this.propertyManager.respawnPropertyId !== null;
         window.dispatchEvent(new CustomEvent('mumbye_dialog_message', {
           detail: { 
-            speaker: "Metro General Hospital", 
-            text: `Patient revived & discharged. Medical fee: ₹${fee}. Wanted heat cleared.` 
+            speaker: isSafehouse ? "Safehouse Recovery" : "Metro General Hospital", 
+            text: isSafehouse ? "Revived & rested at your personal safehouse. Wanted heat cleared." : `Patient revived & discharged. Medical fee: ₹${fee}. Wanted heat cleared.` 
           }
         }));
       }, 3500);
@@ -323,7 +329,7 @@ export class Engine {
     const elevatorPads = this.cityMap.elevatorPads || [];
     const blackMarketShops = this.cityMap.blackMarketShops || [];
     if (!this.drone.isActive) {
-      this.player.update(delta, this.input, allVehicles, stalls, elevatorPads, blackMarketShops);
+      this.player.update(delta, this.input, allVehicles, stalls, elevatorPads, blackMarketShops, this.propertyManager);
 
       // If player is driving road vehicle or non-helicopter/speedboat
       if (this.player.isDriving && this.player.currentVehicle && this.player.currentVehicle !== this.helicopter && this.player.currentVehicle.type !== 'speedboat') {
@@ -339,12 +345,14 @@ export class Engine {
       window.dispatchEvent(new CustomEvent('mumbye_neighborhood_entered', { detail: district }));
     }
 
-    // Update Traffic, Pedestrians & Police
+    // Update Traffic, Pedestrians, Police, Real Estate & Transit
     const activeAircraft = [this.drone, this.helicopter, ...(this.policeSystem.policeDrones || [])];
     this.trafficManager.update(delta, this.player.position, this.cityMap.roadNodes);
     this.pedestrianManager.update(delta, this.player, this.cityMap.sidewalkNodes, activeAircraft);
     this.policeSystem.update(delta, this.player, this.drone, this.helicopter);
-    this.trainSystem.update(delta, this.player.position);
+    this.transitSystem.update(delta, this.player);
+    this.propertyManager.update(delta, this.player);
+    this.broadcastSystem.update(delta);
 
     // Update Missions & DLC
     this.missionManager.update(delta, this.player.position, this.player);

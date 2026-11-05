@@ -524,6 +524,165 @@ async function runTestSuite() {
   });
   console.log('  ✅ Pedestrian Reaction State near Helicopter:', pedCrowdState.result.value);
 
+  // Test Action 15: HTML5 Gamepad API Support & Synthetic Controller Polling
+  console.log('\n  👉 Testing HTML5 Gamepad API Integration & Controller Polling...');
+  const gamepadTest = await sendCommand('Runtime.evaluate', {
+    expression: `(() => {
+      const input = window.mumbyeGame.input;
+      // Test rumble capability method safely
+      input.playRumble(0.2, 0.4, 200);
+
+      // Simulate a synthetic gamepad state
+      const simulatedPad = {
+        axes: [0.8, -0.6, 0.5, -0.3], // Left stick X/Y, Right stick X/Y
+        buttons: [
+          { pressed: true, value: 1 }, // 0: A (jump)
+          { pressed: false, value: 0 }, // 1: B
+          { pressed: true, value: 1 }, // 2: X (interact)
+          { pressed: false, value: 0 }, // 3: Y
+          { pressed: false, value: 0 }, // 4: LB
+          { pressed: true, value: 1 }, // 5: RB (sprint)
+          { pressed: false, value: 0 }, // 6: LT
+          { pressed: true, value: 1 }, // 7: RT (fire)
+        ]
+      };
+      input.pollGamepad(simulatedPad);
+      return {
+        moveForward: input.moveForward,
+        moveRight: input.moveRight,
+        isSprinting: input.isSprinting,
+        isJumping: input.isJumping,
+        isFiring: input.isFiring
+      };
+    })()`,
+    returnByValue: true
+  });
+  console.log('  ✅ Gamepad Input Processing:', gamepadTest.result.value);
+  if (!gamepadTest.result.value.isSprinting || !gamepadTest.result.value.isJumping || !gamepadTest.result.value.isFiring) {
+    throw new Error('Gamepad synthetic polling failed to register buttons');
+  }
+
+  // Test Action 16: Safehouses & Real Estate Architecture
+  console.log('\n  👉 Testing Safehouse & Real Estate Architecture...');
+  const propertyTest = await sendCommand('Runtime.evaluate', {
+    expression: `(() => {
+      const pm = window.mumbyeGame.propertyManager;
+      const player = window.mumbyeGame.player;
+      const initialProps = pm.getAllProperties();
+
+      // Check default registered properties
+      const bandraVilla = pm.getProperty('bandra_villa');
+
+      // Give player sufficient cash and buy Bandra Villa
+      player.cash += 50000;
+      const buySuccess = pm.buyProperty('bandra_villa', player);
+
+      // Enter safehouse
+      pm.enterSafehouse(bandraVilla, player);
+      const isInside = pm.activeSafehouse?.id === 'bandra_villa';
+      const respawnPos = pm.getRespawnPosition();
+
+      // Exit safehouse
+      pm.exitSafehouse(bandraVilla, player);
+      const isExited = pm.activeSafehouse === null;
+
+      // Test passive income distribution
+      const cashBefore = player.cash;
+      pm.revenueTimer = 0.01;
+      pm.update(0.02, player);
+      const passiveEarned = player.cash - cashBefore;
+
+      return {
+        totalProperties: initialProps.length,
+        bought: buySuccess,
+        isInside,
+        isExited,
+        respawnSet: respawnPos.x === bandraVilla.exteriorPos.x,
+        passiveEarned
+      };
+    })()`,
+    returnByValue: true
+  });
+  console.log('  ✅ Real Estate Architecture State:', propertyTest.result.value);
+  if (!propertyTest.result.value.bought || propertyTest.result.value.passiveEarned <= 0) {
+    throw new Error('Property purchase or passive dividend payout failed');
+  }
+
+  // Test Action 17: Suburban Local Train & Transit System
+  console.log('\n  👉 Testing Suburban Local Train EMU & Public Transit Architecture...');
+  const transitTest = await sendCommand('Runtime.evaluate', {
+    expression: `(() => {
+      const ts = window.mumbyeGame.transitSystem;
+      const player = window.mumbyeGame.player;
+      const train = ts.suburbanTrain;
+
+      // Check routes & coaches
+      const coachesCount = train.coaches.length;
+      const stationsCount = ts.stations.length;
+
+      // Simulate train arriving at Dadar station and slowing
+      train.currentZ = -105.0;
+      ts.update(0.1, player);
+      const stateAtStation = train.state;
+
+      // Board train
+      player.position.set(45.5, 0.5, -100.0);
+      ts.boardTrain(player);
+      const isRiding = ts.isPlayerRiding;
+
+      // Toggle doorway hanging mode
+      ts.toggleDoorHanging(player);
+      const isHanging = ts.doorHangingMode;
+
+      // Advance train physics
+      ts.update(0.2, player);
+
+      // Alight train
+      ts.alightTrain(player);
+      const isAlighted = !ts.isPlayerRiding;
+
+      return {
+        coachesCount,
+        stationsCount,
+        stateAtStation,
+        isRiding,
+        isHanging,
+        isAlighted
+      };
+    })()`,
+    returnByValue: true
+  });
+  console.log('  ✅ Suburban Local Transit System State:', transitTest.result.value);
+  if (transitTest.result.value.coachesCount !== 4 || !transitTest.result.value.isHanging || !transitTest.result.value.isAlighted) {
+    throw new Error('Transit system boarding or doorway hanging verification failed');
+  }
+
+  // Test Action 18: Dynamic Radio Broadcast & Procedural RJ News Engine
+  console.log('\n  👉 Testing Dynamic Radio Broadcast, Breaking News & Procedural RJ Engine...');
+  const broadcastTest = await sendCommand('Runtime.evaluate', {
+    expression: `(() => {
+      const bs = window.mumbyeGame.broadcastSystem;
+
+      // Trigger breaking news bulletin
+      bs.broadcastNewsFlash("ALERT: Metro Security interceptors sweeping Marine Drive!");
+
+      // Trigger DJ Banter
+      bs.triggerDjBanter(1); // Bombay Disco 98.3
+
+      return {
+        broadcastEnabled: bs.speechEnabled,
+        totalBroadcasts: bs.totalBroadcasts,
+        lastBroadcast: bs.lastBroadcast,
+        currentStation: window.mumbyeGame.audioEngine.currentRadioStation
+      };
+    })()`,
+    returnByValue: true
+  });
+  console.log('  ✅ Dynamic Broadcast Engine Status:', broadcastTest.result.value);
+  if (!broadcastTest.result.value || broadcastTest.result.value.totalBroadcasts < 2) {
+    throw new Error('Broadcast system failed to queue breaking news bulletins');
+  }
+
   // Step 6: Capture Screenshot
   console.log('\n[6/6] Capturing in-game rendered screenshot...');
   const screenshotRes = await sendCommand('Page.captureScreenshot', { format: 'png' });

@@ -11,6 +11,7 @@ export class MissionManager {
     this.currentCheckpointIndex = 0;
     this.missionTimer = 0;
     this.combatKills = 0;
+    this.customWaypoint = null;
 
     // Taxi Driver side hustle mode
     this.taxiModeActive = false;
@@ -141,6 +142,17 @@ export class MissionManager {
         if (dist <= (cp.radius || 4.5)) {
           this.advanceCheckpoint(player);
         }
+      }
+    }
+
+    // Custom GPS Waypoint arrival check
+    if (this.customWaypoint && playerPos) {
+      if (playerPos.distanceTo(this.customWaypoint) < 6.0) {
+        this.customWaypoint = null;
+        this.audioEngine?.playShopChime?.();
+        window.dispatchEvent(new CustomEvent('mumbye_dialog_message', {
+          detail: { speaker: "GPS Navigator", text: "You have arrived at your destination waypoint!" }
+        }));
       }
     }
 
