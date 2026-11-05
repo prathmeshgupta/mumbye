@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>MUMBYE: MAXIMUM CITY - Open World Mumbai GTA Game</title>
+  <link rel="stylesheet" href="./src/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛺</text></svg>">
+</head>
+<body>
+  <!-- 3D WebGL Canvas Container -->
+  <div id="game-canvas-container"></div>
+
+  <!-- Bhai Time (Action Hero Slow-Mo) Screen Vignette -->
+  <div id="bhai-time-vignette"></div>
+
+  <!-- Aim Crosshair -->
+  <div id="aim-crosshair">+</div>
+
+  <!-- HUD Overlay -->
+  <div id="hud-root">
+    <!-- Top-Left: Objective Bar -->
+    <div id="objective-bar" style="display: none;">
+      <div class="objective-icon">🎯</div>
+      <div class="objective-text">Deliver the VIP Dabba to Bandra!</div>
+      <div class="objective-timer" id="obj-timer">90s</div>
+    </div>
+
+    <!-- Top-Center: Radio Status Pill -->
+    <div id="hud-radio-pill"></div>
+
+    <!-- Top-Right: Player Status, Cash, Wanted Level & Weapon -->
+    <div id="hud-top-right">
+      <div id="hud-wanted-stars">
+        <span class="star">★</span>
+        <span class="star">★</span>
+        <span class="star">★</span>
+        <span class="star">★</span>
+        <span class="star">★</span>
+      </div>
+
+      <div id="hud-cash-display">
+        <span id="hud-cash-value">₹ 250</span>
+      </div>
+
+      <div id="hud-weapon-card">
+        <div id="hud-weapon-name">Bare Fists</div>
+        <div id="hud-weapon-ammo">∞</div>
+      </div>
+
+      <div class="hud-quick-buttons">
+        <button id="hud-phone-btn" title="Open Phone (P)">📱 Phone</button>
+        <button id="hud-dlc-btn" title="Open DLC Manager (M)">🧩 DLCs</button>
+        <button id="hud-help-btn" title="Controls & Guide">❓ Help</button>
+      </div>
+    </div>
+
+    <!-- Bottom-Left: Minimap Radar & Status Gauges -->
+    <div id="hud-bottom-left">
+      <div id="minimap-wrapper">
+        <canvas id="minimap-canvas" width="180" height="180"></canvas>
+      </div>
+      <div id="hud-bars">
+        <div class="bar-container">
+          <div class="bar-label">HP</div>
+          <div class="bar-track"><div id="hud-health-fill" class="bar-fill health-fill"></div></div>
+        </div>
+        <div class="bar-container">
+          <div class="bar-label">ARM</div>
+          <div class="bar-track"><div id="hud-armor-fill" class="bar-fill armor-fill"></div></div>
+        </div>
+        <div class="bar-container">
+          <div class="bar-label">STM</div>
+          <div class="bar-track"><div id="hud-stamina-fill" class="bar-fill stamina-fill"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom-Center: Context Action Prompt -->
+    <div id="hud-action-prompt" style="display: none;"></div>
+
+    <!-- Bottom-Right: In-Vehicle Speedometer & Nitro -->
+    <div id="hud-speedometer" style="display: none;">
+      <div class="speed-number">
+        <span id="hud-speed-val">0</span>
+        <span class="speed-unit">KM/H</span>
+      </div>
+      <div class="nitro-gauge">
+        <div class="nitro-label">NITRO (SHIFT)</div>
+        <div class="nitro-track"><div id="hud-nitro-fill"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dialog Subtitles Box -->
+  <div id="dialog-container" style="display: none;"></div>
+
+  <!-- GTA Grand Mission Banner -->
+  <div id="gta-banner-container" style="display: none;"></div>
+
+  <!-- Bambaiya Smartphone Container -->
+  <div id="smartphone-container"></div>
+
+  <!-- DLC Manager Modal -->
+  <div id="dlc-modal" style="display: none;"></div>
+
+  <!-- Controls & Help Modal -->
+  <div id="controls-modal" style="display: none;">
+    <div class="controls-content">
+      <div class="controls-header">
+        <h2>MUMBYE: MAXIMUM CITY - CONTROLS & GUIDE</h2>
+        <button id="help-close-btn" class="close-btn">✖</button>
+      </div>
+      <div class="controls-grid">
+        <div class="ctrl-col">
+          <h3>🚶 ON FOOT</h3>
+          <ul>
+            <li><b>WASD / Arrows:</b> Move Kabir</li>
+            <li><b>Shift:</b> Sprint</li>
+            <li><b>Space:</b> Jump</li>
+            <li><b>Left Click / F:</b> Attack / Fire Weapon</li>
+            <li><b>Right Click:</b> Aim Crosshair (Over Shoulder)</li>
+            <li><b>1 - 6 / Q / Wheel:</b> Change Weapon</li>
+            <li><b>E:</b> Enter Vehicle / Eat Vada Pav at Tapri</li>
+          </ul>
+        </div>
+        <div class="ctrl-col">
+          <h3>🛺 VEHICLES</h3>
+          <ul>
+            <li><b>W / Up:</b> Accelerate</li>
+            <li><b>S / Down:</b> Brake / Reverse</li>
+            <li><b>A / D:</b> Steer</li>
+            <li><b>Spacebar:</b> Handbrake & Drift</li>
+            <li><b>Shift:</b> Nitro Boost (Bandra DLC)</li>
+            <li><b>H:</b> Mumbai Horn / Police Siren</li>
+            <li><b>R:</b> Switch Mumbai Radio Station</li>
+            <li><b>T:</b> Toggle Taxi Driver Missions</li>
+            <li><b>E:</b> Exit Vehicle</li>
+          </ul>
+        </div>
+        <div class="ctrl-col">
+          <h3>📱 PHONE & DLC</h3>
+          <ul>
+            <li><b>P:</b> Open Bambaiya Smartphone</li>
+            <li><b>M:</b> Open DLC & Mod Manager</li>
+            <li><b>B:</b> Bhai Time (Slow-Mo Bullet Time)</li>
+            <li><b>Tapri (Food Stall):</b> Restores 100 Health for ₹20</li>
+            <li><b>Police:</b> 1-5 Stars; pay bribe via phone or hide in alleys!</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Touch Controls Overlay for Mobile Browsers -->
+  <div id="touch-controls" style="display: none;">
+    <div id="touch-move-zone">
+      <div id="touch-move-stick"></div>
+    </div>
+  </div>
+
+  <!-- Start Screen / Audio Activator -->
+  <div id="start-overlay">
+    <div class="start-card">
+      <div class="start-title">MUMBYE</div>
+      <div class="start-subtitle">MAXIMUM CITY</div>
+      <div class="start-tagline">Open World Mumbai 3D Action Game • Powered by Three.js • Extensible DLC Engine</div>
+      <div class="start-features">
+        <span>🛺 Auto Rickshaws & Kaali-Peeli Taxis</span>
+        <span>🌊 Marine Drive & Sea Link</span>
+        <span>👮 Mumbai Police (Wanted Stars)</span>
+        <span>📻 4 Procedural Radio Stations</span>
+        <span>🧩 3 Bundled DLCs & Modder SDK</span>
+      </div>
+      <button id="start-game-btn" class="start-btn">ENTER MAXIMUM CITY</button>
+      <div class="start-hint">Click anywhere to start • Full Audio & Controls Ready</div>
+    </div>
+  </div>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
