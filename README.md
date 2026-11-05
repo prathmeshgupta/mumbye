@@ -41,12 +41,16 @@ Everything is finished end-to-end:
 
 ## 🚀 Quick Start
 
-Run the game locally in your browser with zero setup:
+### Option A: Standalone Windows Executable (.exe)
+Double-click **`Mumbye.exe`** directly from the root of this repository (or download it from [GitHub Releases](https://github.com/prathmeshgupta/mumbye/releases)).
+* ⚡ No Node.js or npm required!
+* 🖥️ Runs in a dedicated, high-performance 60+ FPS desktop window with native pointer lock, audio synthesis, and DLC support.
 
+### Option B: Run via Node / Web Browser
 ```bash
-# Start the production server
+# Start the local web server
 npm start
-# or start development mode
+# or start live Vite development mode
 npm run dev
 ```
 
@@ -121,6 +125,9 @@ For full developer API documentation and code samples, see [`docs/DLC_CREATION_G
 
 ```
 c:\Users\pratj\Mumbye\
+├── Mumbye.exe                   # Standalone desktop game executable for Windows
+├── MumbyeLauncher.cs            # Native desktop launcher source
+├── Mumbye.ico                   # Application icon
 ├── index.html                   # Master UI, HUD, and Canvas HTML
 ├── server.js                    # Zero-dependency local web server
 ├── package.json                 # Scripts and dependencies (Three.js & Vite)
