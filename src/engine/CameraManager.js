@@ -223,7 +223,7 @@ export class CameraManager {
     const vehHeight = this.targetVehicle.height || 1.8;
     this.target.set(vehPos.x, vehPos.y + vehHeight * 0.7, vehPos.z);
 
-    const vehicleDist = (this.targetVehicle.type === 'bus') ? 11.0 : (this.targetVehicle.type === 'auto') ? 6.2 : 6.8;
+    const vehicleDist = (this.targetVehicle.type === 'bus') ? 11.0 : (this.targetVehicle.type === 'speedboat') ? 8.5 : (this.targetVehicle.type === 'auto') ? 6.2 : 6.8;
     const cosPitch = Math.cos(Math.max(0.1, this.pitch));
     const offsetX = vehicleDist * cosPitch * Math.sin(this.yaw);
     const offsetY = vehicleDist * Math.sin(Math.max(0.18, this.pitch)) + 1.2;

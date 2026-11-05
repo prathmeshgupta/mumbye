@@ -850,4 +850,143 @@ export class AudioEngine {
     osc.start(now);
     osc.stop(now + 0.16);
   }
+
+  // --- Speedboat Marine Outboard Engine ---
+  startBoatEngine() {
+    if (!this.initialized || this.isMuted) return;
+    this.stopBoatEngine();
+
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const subOsc = this.ctx.createOscillator();
+    const filter = this.ctx.createBiquadFilter();
+    const gain = this.ctx.createGain();
+
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(42, now);
+
+    subOsc.type = 'triangle';
+    subOsc.frequency.setValueAtTime(84, now);
+
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(380, now);
+
+    gain.gain.setValueAtTime(0.25, now);
+
+    osc.connect(filter);
+    subOsc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.engineGain);
+
+    osc.start(now);
+    subOsc.start(now);
+
+    this.currentBoatNode = { osc, subOsc, filter, gain };
+  }
+
+  updateBoatEngine(speedNormalized = 0, isAccelerating = false) {
+    if (!this.currentBoatNode || !this.ctx) return;
+    const { osc, subOsc, filter, gain } = this.currentBoatNode;
+    const now = this.ctx.currentTime;
+
+    const baseFreq = 42;
+    const maxFreq = 185;
+    const targetFreq = baseFreq + speedNormalized * (maxFreq - baseFreq) + (isAccelerating ? 30 : 0);
+    osc.frequency.setTargetAtTime(targetFreq, now, 0.08);
+    subOsc.frequency.setTargetAtTime(targetFreq * 1.5, now, 0.08);
+
+    const targetCutoff = 320 + speedNormalized * 650 + (isAccelerating ? 250 : 0);
+    filter.frequency.setTargetAtTime(targetCutoff, now, 0.08);
+
+    const targetGain = 0.18 + speedNormalized * 0.28;
+    gain.gain.setTargetAtTime(targetGain, now, 0.05);
+  }
+
+  stopBoatEngine() {
+    if (this.currentBoatNode) {
+      try {
+        const now = this.ctx.currentTime;
+        this.currentBoatNode.gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+        this.currentBoatNode.osc.stop(now + 0.15);
+        this.currentBoatNode.subOsc.stop(now + 0.15);
+      } catch (e) {}
+      this.currentBoatNode = null;
+    }
+  }
+
+  // Water Splash Wave Sound
+  playWaterSplash() {
+    if (!this.initialized || this.isMuted) return;
+    this.playNoise(0.35, 0.45, 1200, 'bandpass');
+  }
+
+  // Metro Security Interceptor Drone Stun Laser
+  playStunLaser() {
+    if (!this.initialized || this.isMuted) return;
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(1600, now);
+    osc.frequency.exponentialRampToValueAtTime(220, now + 0.14);
+
+    gain.gain.setValueAtTime(0.35, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+
+    osc.connect(gain);
+    gain.connect(this.sfxGain);
+
+    osc.start(now);
+    osc.stop(now + 0.14);
+  }
+
+  // Black Market / Chop Shop Ka-Ching & Transaction Chime
+  playShopKaching() {
+    if (!this.initialized || this.isMuted) return;
+    const now = this.ctx.currentTime;
+
+    // High register cash bell
+    const osc1 = this.ctx.createOscillator();
+    const osc2 = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc1.type = 'sine';
+    osc2.type = 'triangle';
+    osc1.frequency.setValueAtTime(1760, now); // A6
+    osc1.frequency.setValueAtTime(2349.32, now + 0.09); // D7
+    osc2.frequency.setValueAtTime(2637.02, now + 0.09); // E7
+
+    gain.gain.setValueAtTime(0.3, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+
+    osc1.connect(gain);
+    osc2.connect(gain);
+    gain.connect(this.sfxGain);
+
+    osc1.start(now);
+    osc2.start(now + 0.09);
+    osc1.stop(now + 0.45);
+    osc2.stop(now + 0.45);
+  }
+
+  playShopChime() {
+    if (!this.initialized || this.isMuted) return;
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(880, now);
+    osc.frequency.setValueAtTime(1174.66, now + 0.07);
+
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+
+    osc.connect(gain);
+    gain.connect(this.sfxGain);
+
+    osc.start(now);
+    osc.stop(now + 0.28);
+  }
 }

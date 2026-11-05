@@ -13,6 +13,9 @@ export class PhoneUI {
       { code: 'SEHAT', desc: 'Full Health & 100 Armor' },
       { code: 'HATHIYAR', desc: 'Unlock All Weapons & Max Ammo' },
       { code: 'POLICEHATAO', desc: 'Clear All Wanted Stars' },
+      { code: 'HEAT5', desc: '5-Star Heat (Interceptor Drones & Cruisers)' },
+      { code: 'BOAT', desc: 'Teleport to Colaba Harbor Speedboat Basin' },
+      { code: 'CHOP', desc: 'Teleport to Chor Bazaar Black Market Shop' },
       { code: 'DRONE', desc: 'Instant Deploy SkyEye Drone' },
       { code: 'HELI', desc: 'Teleport to AstraCorp Helipad' },
       { code: 'SUPERCAR', desc: 'Spawn Bollywood Supercar' },
@@ -287,6 +290,17 @@ export class PhoneUI {
     } else if (code === 'POLICEHATAO') {
       g.policeSystem.setWantedLevel(0);
       this.showCheatAlert("CHEAT ACTIVATED: Wanted Stars Cleared!");
+    } else if (code === 'HEAT5') {
+      g.policeSystem.setWantedLevel(5);
+      this.showCheatAlert("CHEAT ACTIVATED: 5-Star Wanted Level! Interceptors Dispatched!");
+    } else if (code === 'BOAT') {
+      g.player.position.set(280, 0.4, 110);
+      g.player.velocity.set(0, 0, 0);
+      this.showCheatAlert("CHEAT ACTIVATED: Teleported to Colaba Harbor Pier!");
+    } else if (code === 'CHOP') {
+      g.player.position.set(95, 0.2, 27);
+      g.player.velocity.set(0, 0, 0);
+      this.showCheatAlert("CHEAT ACTIVATED: Teleported to Chor Bazaar Black Market!");
     } else if (code === 'DRONE') {
       g.toggleDrone();
       this.showCheatAlert("CHEAT ACTIVATED: SkyEye Drone Deployed!");

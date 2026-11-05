@@ -97,7 +97,6 @@ export class ParticleSystem {
         Math.random() * 2.5 + 0.5,
         (Math.random() - 0.5) * 2
       );
-
       this.createParticle({
         position: position.clone(),
         velocity: vel,
@@ -105,9 +104,58 @@ export class ParticleSystem {
         color: 0x990000,
         life: 0.4,
         decay: 1.0,
-        gravity: 12
+        gravity: 9.8
       });
     }
+  }
+
+  // Speedboat Water Spray & Foaming Ocean Wake
+  spawnWaterWake(position, forwardDir, speed = 10) {
+    const sternOffset = forwardDir.clone().negate().multiplyScalar(1.2);
+    const leftSpray = new THREE.Vector3(-forwardDir.z, 0, forwardDir.x).multiplyScalar(0.7);
+    const rightSpray = new THREE.Vector3(forwardDir.z, 0, -forwardDir.x).multiplyScalar(0.7);
+
+    [leftSpray, rightSpray].forEach(sprayDir => {
+      const pPos = position.clone().add(sternOffset).add(sprayDir);
+      pPos.y = -0.3; // Water surface
+
+      const vel = sprayDir.clone().multiplyScalar(speed * 0.2 + 1.5)
+        .add(new THREE.Vector3(0, 1.2 + Math.random() * 1.5, 0));
+
+      this.createParticle({
+        position: pPos,
+        velocity: vel,
+        size: 0.22 + Math.random() * 0.15,
+        color: 0xe0f2fe,
+        opacity: 0.85,
+        life: 0.35 + Math.random() * 0.2,
+        decay: 1.0,
+        growth: 2.2,
+        gravity: 6.0
+      });
+    });
+  }
+
+  // Metro Security Laser / Stun Beam Bolt
+  spawnStunBeam(startPos, endPos) {
+    const dir = endPos.clone().sub(startPos);
+    const length = dir.length();
+    const beamGeo = new THREE.CylinderGeometry(0.08, 0.08, length, 6);
+    beamGeo.rotateX(Math.PI / 2);
+    const beamMat = new THREE.MeshBasicMaterial({ color: 0x06b6d4, transparent: true, opacity: 0.9 });
+    const beam = new THREE.Mesh(beamGeo, beamMat);
+    beam.position.copy(startPos).addScaledVector(dir, 0.5);
+    beam.lookAt(endPos);
+    this.scene.add(beam);
+
+    setTimeout(() => {
+      this.scene.remove(beam);
+      beamGeo.dispose();
+      beamMat.dispose();
+    }, 90);
+
+    // Impact sparks
+    this.spawnSparks(endPos);
   }
 
   spawnTireSmoke(position) {

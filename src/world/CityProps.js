@@ -7,6 +7,7 @@ export class CityProps {
     this.physics = physics;
     this.interactiveStalls = []; // Vada Pav & Chai stalls
     this.stuntRamps = [];
+    this.blackMarketShops = []; // Walk-in chop shops & contraband fences
 
     // Shared Materials Cache
     this.palmTrunkMat = new THREE.MeshStandardMaterial({ color: 0x5a3e28, roughness: 0.9 });
@@ -493,6 +494,200 @@ export class CityProps {
     this.physics.addStaticBox(new THREE.Box3().setFromObject(l2));
     this.physics.addStaticBox(new THREE.Box3().setFromObject(l3));
     this.physics.addStaticBox(new THREE.Box3().setFromObject(l4));
+    return group;
+  }
+
+  // --- Walk-in Chor Bazaar Black Market & Chop Shop Interior ---
+  createWalkInShop(x, z, label = "CHOR BAZAAR BLACK MARKET & CHOP SHOP") {
+    const group = new THREE.Group();
+    group.name = 'BlackMarketShop';
+    group.position.set(x, 0, z);
+
+    const wallMat = new THREE.MeshStandardMaterial({ color: 0x3d2b1f, roughness: 0.85 }); // Vintage dark timber & plaster
+    const floorMat = new THREE.MeshStandardMaterial({ color: 0x1f1915, roughness: 0.6 }); // Terracotta tiles
+    const woodMat = new THREE.MeshStandardMaterial({ color: 0x543621, roughness: 0.7 });
+    const metalMat = new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.8, roughness: 0.3 });
+    const goldMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.85, roughness: 0.2 });
+
+    const width = 11.0;
+    const depth = 9.0;
+    const height = 4.2;
+
+    // Floor
+    const floorGeo = new THREE.BoxGeometry(width, 0.2, depth);
+    const floor = new THREE.Mesh(floorGeo, floorMat);
+    floor.position.set(0, 0.1, 0);
+    floor.receiveShadow = true;
+    group.add(floor);
+
+    // Ceiling / Roof
+    const roofGeo = new THREE.BoxGeometry(width + 0.4, 0.3, depth + 0.4);
+    const roof = new THREE.Mesh(roofGeo, wallMat);
+    roof.position.set(0, height + 0.15, 0);
+    group.add(roof);
+
+    // Back Wall (z = -depth/2)
+    const backWall = new THREE.Mesh(new THREE.BoxGeometry(width, height, 0.4), wallMat);
+    backWall.position.set(0, height / 2, -depth / 2);
+    group.add(backWall);
+
+    // Left Wall (x = -width/2)
+    const leftWall = new THREE.Mesh(new THREE.BoxGeometry(0.4, height, depth), wallMat);
+    leftWall.position.set(-width / 2, height / 2, 0);
+    group.add(leftWall);
+
+    // Right Wall (x = width/2)
+    const rightWall = new THREE.Mesh(new THREE.BoxGeometry(0.4, height, depth), wallMat);
+    rightWall.position.set(width / 2, height / 2, 0);
+    group.add(rightWall);
+
+    // Front Wall with Walk-In Doorway Opening (Doorway width 3.6m in center)
+    const frontWallLeft = new THREE.Mesh(new THREE.BoxGeometry((width - 3.6) / 2, height, 0.4), wallMat);
+    frontWallLeft.position.set(-(width / 2) + (width - 3.6) / 4, height / 2, depth / 2);
+    const frontWallRight = new THREE.Mesh(new THREE.BoxGeometry((width - 3.6) / 2, height, 0.4), wallMat);
+    frontWallRight.position.set((width / 2) - (width - 3.6) / 4, height / 2, depth / 2);
+    const doorLintel = new THREE.Mesh(new THREE.BoxGeometry(3.6, 1.2, 0.4), wallMat);
+    doorLintel.position.set(0, height - 0.6, depth / 2);
+    group.add(frontWallLeft, frontWallRight, doorLintel);
+
+    // Shopkeeper Wooden Counter Desk
+    const counter = new THREE.Mesh(new THREE.BoxGeometry(5.0, 1.1, 1.1), woodMat);
+    counter.position.set(0, 0.65, -1.2);
+    group.add(counter);
+
+    // Cash Register & Weighing Scale on Counter
+    const reg = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.35, 0.5), metalMat);
+    reg.position.set(-1.2, 1.35, -1.2);
+    const scale = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.3, 8), goldMat);
+    scale.position.set(1.2, 1.35, -1.2);
+    group.add(reg, scale);
+
+    // Contraband Shelves on Back Wall
+    for (let sy = 1.2; sy <= 3.2; sy += 0.9) {
+      const shelf = new THREE.Mesh(new THREE.BoxGeometry(8.0, 0.08, 0.6), woodMat);
+      shelf.position.set(0, sy, -depth / 2 + 0.35);
+      group.add(shelf);
+
+      // Crates and smuggled electronics on shelves
+      [-2.5, -0.8, 1.0, 2.7].forEach(sx => {
+        const crate = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.45, 0.4), goldMat);
+        crate.position.set(sx, sy + 0.25, -depth / 2 + 0.35);
+        group.add(crate);
+      });
+    }
+
+    // NPC Shopkeeper ("Khadim Bhai") behind counter
+    const shopkeeper = new THREE.Group();
+    shopkeeper.position.set(0, 0, -2.6);
+    const torso = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.9, 0.4), new THREE.MeshStandardMaterial({ color: 0x78350f })); // Kurta
+    torso.position.y = 1.2;
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.25, 8, 8), new THREE.MeshStandardMaterial({ color: 0xd97706 }));
+    head.position.y = 1.85;
+    // Mustache
+    const stache = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.05, 0.06), new THREE.MeshBasicMaterial({ color: 0x111111 }));
+    stache.position.set(0, 1.8, 0.22);
+    shopkeeper.add(torso, head, stache);
+    group.add(shopkeeper);
+
+    // Overhead Warm Interior Lantern Lamp
+    const lamp = new THREE.PointLight(0xffedd5, 1.8, 12);
+    lamp.position.set(0, 3.6, 0);
+    group.add(lamp);
+
+    // Glowing Exterior Neon Shop Sign
+    const signCanvas = document.createElement('canvas');
+    signCanvas.width = 512;
+    signCanvas.height = 128;
+    const sctx = signCanvas.getContext('2d');
+    sctx.fillStyle = '#1c1917';
+    sctx.fillRect(0, 0, 512, 128);
+    sctx.strokeStyle = '#f59e0b';
+    sctx.lineWidth = 6;
+    sctx.strokeRect(6, 6, 500, 116);
+    sctx.font = 'bold 36px Montserrat, Rajdhani, sans-serif';
+    sctx.fillStyle = '#f59e0b';
+    sctx.textAlign = 'center';
+    sctx.textBaseline = 'middle';
+    sctx.fillText("CHOR BAZAAR CHOP SHOP", 256, 45);
+    sctx.font = '22px Montserrat, sans-serif';
+    sctx.fillStyle = '#fbbf24';
+    sctx.fillText("CONTRABAND FENCE & WEAPON MODS", 256, 85);
+
+    const signTex = new THREE.CanvasTexture(signCanvas);
+    const signMesh = new THREE.Mesh(new THREE.PlaneGeometry(6.5, 1.8), new THREE.MeshBasicMaterial({ map: signTex }));
+    signMesh.position.set(0, height + 0.9, depth / 2 + 0.05);
+    group.add(signMesh);
+
+    this.scene.add(group);
+
+    // Register physics collisions for walls & counter
+    this.physics.addStaticBox(new THREE.Box3().setFromObject(backWall));
+    this.physics.addStaticBox(new THREE.Box3().setFromObject(leftWall));
+    this.physics.addStaticBox(new THREE.Box3().setFromObject(rightWall));
+    this.physics.addStaticBox(new THREE.Box3().setFromObject(frontWallLeft));
+    this.physics.addStaticBox(new THREE.Box3().setFromObject(frontWallRight));
+    this.physics.addStaticBox(new THREE.Box3().setFromObject(counter));
+
+    // Register Black Market Shop trigger location for player interaction
+    const shopEntry = {
+      position: new THREE.Vector3(x, 0.5, z - 1.2),
+      label: label,
+      shopkeeperName: "Khadim Bhai"
+    };
+    this.blackMarketShops.push(shopEntry);
+
+    return group;
+  }
+
+  // --- Wooden Maritime Boat Pier & Jetty ---
+  createBoatPier(x, z, length = 18, width = 4.2, rotY = 0) {
+    const group = new THREE.Group();
+    group.name = 'BoatPier';
+    group.position.set(x, 0, z);
+    group.rotation.y = rotY;
+
+    const woodPlankMat = new THREE.MeshStandardMaterial({ color: 0x451a03, roughness: 0.9 });
+    const pilingMat = new THREE.MeshStandardMaterial({ color: 0x27170e, roughness: 0.95 });
+    const cleatMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.8, roughness: 0.2 });
+
+    // Wooden Deck
+    const deck = new THREE.Mesh(new THREE.BoxGeometry(width, 0.35, length), woodPlankMat);
+    deck.position.set(0, 0.15, length / 2);
+    deck.receiveShadow = true;
+    group.add(deck);
+
+    // Wooden Pilings
+    const pilingGeo = new THREE.CylinderGeometry(0.18, 0.18, 3.5, 8);
+    for (let pz = 1.5; pz <= length - 1.0; pz += 3.5) {
+      [-width / 2 + 0.2, width / 2 - 0.2].forEach(px => {
+        const piling = new THREE.Mesh(pilingGeo, pilingMat);
+        piling.position.set(px, -1.2, pz);
+        group.add(piling);
+
+        // Mooring cleat on deck edge
+        const cleat = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.12, 0.35), cleatMat);
+        cleat.position.set(px, 0.38, pz);
+        group.add(cleat);
+      });
+    }
+
+    // Safety Lifebuoy Ring at Pier End
+    const lifebuoy = new THREE.Mesh(
+      new THREE.TorusGeometry(0.4, 0.12, 8, 16),
+      new THREE.MeshStandardMaterial({ color: 0xe11d48, roughness: 0.4 })
+    );
+    lifebuoy.position.set(0, 0.8, length - 0.2);
+    group.add(lifebuoy);
+
+    this.scene.add(group);
+
+    // Static walkable deck box
+    const pierBox = new THREE.Box3(
+      new THREE.Vector3(x - width / 2, -0.2, z),
+      new THREE.Vector3(x + width / 2, 0.6, z + length)
+    );
+    this.physics.addRamp(pierBox, 'y', 0.2);
+
     return group;
   }
 }

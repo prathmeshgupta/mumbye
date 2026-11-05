@@ -1042,4 +1042,204 @@ export class ModelFactory {
 
     return group;
   }
+
+  // --- High-Speed Ocean Cruiser / Speedboat ---
+  createSpeedboat(options = {}) {
+    const group = new THREE.Group();
+    group.name = 'Speedboat';
+
+    const isPolice = options.isPolice || false;
+    const hullMat = new THREE.MeshStandardMaterial({
+      color: isPolice ? 0x0f172a : (options.color || 0x0284c7), // Ocean azure or tactical midnight
+      metalness: 0.6,
+      roughness: 0.25
+    });
+    const deckMat = new THREE.MeshStandardMaterial({
+      color: isPolice ? 0xf8fafc : 0xf1f5f9, // Crisp white / fiberglass
+      roughness: 0.4
+    });
+    const glassMat = new THREE.MeshStandardMaterial({
+      color: 0x38bdf8,
+      transparent: true,
+      opacity: 0.6,
+      roughness: 0.1
+    });
+    const chromeMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.9, roughness: 0.1 });
+    const seatMat = new THREE.MeshStandardMaterial({ color: isPolice ? 0x1e293b : 0xb45309, roughness: 0.7 });
+    const motorMat = new THREE.MeshStandardMaterial({ color: 0x111827, metalness: 0.75, roughness: 0.25 });
+
+    // Main V-Hull Bottom
+    const hullGeo = new THREE.BoxGeometry(2.4, 0.7, 6.2);
+    const hull = new THREE.Mesh(hullGeo, hullMat);
+    hull.position.y = 0.35;
+    hull.castShadow = true;
+    group.add(hull);
+
+    // Pointed Bow (Prow) Wedge
+    const bowGeo = new THREE.ConeGeometry(1.2, 2.2, 4);
+    bowGeo.rotateX(Math.PI / 2);
+    const bow = new THREE.Mesh(bowGeo, hullMat);
+    bow.position.set(0, 0.35, 3.8);
+    bow.scale.set(1.0, 0.6, 1.0);
+    group.add(bow);
+
+    // Upper Deck Shell
+    const deckGeo = new THREE.BoxGeometry(2.3, 0.3, 5.0);
+    const deck = new THREE.Mesh(deckGeo, deckMat);
+    deck.position.set(0, 0.75, 0.2);
+    group.add(deck);
+
+    // Open Cockpit Cutout / Floor
+    const cockpitFloor = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.05, 3.2), deckMat);
+    cockpitFloor.position.set(0, 0.5, 0.1);
+    group.add(cockpitFloor);
+
+    // Driver & Passenger Bucket Seats
+    [-0.55, 0.55].forEach(sx => {
+      const seat = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.6, 0.65), seatMat);
+      seat.position.set(sx, 0.8, 0.6);
+      group.add(seat);
+    });
+
+    // Rear Passenger Bench Seat
+    const rearBench = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.6, 0.65), seatMat);
+    rearBench.position.set(0, 0.8, -1.0);
+    group.add(rearBench);
+
+    // Chrome Steering Wheel & Dashboard Console
+    const consoleMesh = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.5, 0.4), hullMat);
+    consoleMesh.position.set(0, 0.95, 1.2);
+    group.add(consoleMesh);
+
+    const wheel = new THREE.Mesh(new THREE.TorusGeometry(0.18, 0.03, 8, 16), chromeMat);
+    wheel.position.set(-0.55, 1.15, 1.05);
+    wheel.rotation.x = -0.5;
+    group.add(wheel);
+
+    // Aerodynamic Curved Windscreen
+    const ws = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.55, 0.08), glassMat);
+    ws.position.set(0, 1.25, 1.35);
+    ws.rotation.x = -0.35;
+    group.add(ws);
+
+    // Twin High-Power Outboard Marine Engines at Transom
+    [-0.65, 0.65].forEach(mx => {
+      const motor = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.95, 0.65), motorMat);
+      motor.position.set(mx, 0.6, -3.2);
+      group.add(motor);
+
+      const prop = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.04, 6), chromeMat);
+      prop.position.set(mx, 0.2, -3.45);
+      prop.rotation.x = Math.PI / 2;
+      group.add(prop);
+    });
+
+    // Navigation Lights
+    const redLight = new THREE.Mesh(new THREE.SphereGeometry(0.08, 6, 6), new THREE.MeshBasicMaterial({ color: 0xef4444 }));
+    redLight.position.set(-1.15, 0.8, 3.2); // Port Red
+    const greenLight = new THREE.Mesh(new THREE.SphereGeometry(0.08, 6, 6), new THREE.MeshBasicMaterial({ color: 0x22c55e }));
+    greenLight.position.set(1.15, 0.8, 3.2); // Starboard Green
+    const sternLight = new THREE.Mesh(new THREE.SphereGeometry(0.08, 6, 6), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+    sternLight.position.set(0, 1.3, -3.1); // Stern White
+    group.add(redLight, greenLight, sternLight);
+
+    if (isPolice) {
+      // Harbor Patrol Strobe Bar
+      const strobeMatL = new THREE.MeshBasicMaterial({ color: 0xef4444 });
+      const strobeMatR = new THREE.MeshBasicMaterial({ color: 0x3b82f6 });
+      const strobeL = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.15, 0.15), strobeMatL);
+      strobeL.position.set(-0.35, 1.6, 0.5);
+      const strobeR = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.15, 0.15), strobeMatR);
+      strobeR.position.set(0.35, 1.6, 0.5);
+      group.add(strobeL, strobeR);
+      group.strobeL = strobeL;
+      group.strobeR = strobeR;
+    }
+
+    return group;
+  }
+
+  // --- Metro Security Tactical Interceptor Drone ---
+  createPoliceInterceptorDrone() {
+    const group = new THREE.Group();
+    group.name = 'PoliceInterceptorDrone';
+
+    const carbonMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.9, roughness: 0.2 });
+    const rotorMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.6 });
+    const redStrobeMat = new THREE.MeshBasicMaterial({ color: 0xef4444 });
+    const blueStrobeMat = new THREE.MeshBasicMaterial({ color: 0x3b82f6 });
+    const cyanLaserLens = new THREE.MeshBasicMaterial({ color: 0x06b6d4 });
+
+    // Central Hexagonal Tactical Pod
+    const bodyGeo = new THREE.CylinderGeometry(0.6, 0.7, 0.35, 6);
+    const body = new THREE.Mesh(bodyGeo, carbonMat);
+    body.castShadow = true;
+    group.add(body);
+
+    // Quad Outrigger Carbon Booms
+    const boomGeo = new THREE.BoxGeometry(0.08, 0.06, 1.4);
+    const b1 = new THREE.Mesh(boomGeo, carbonMat);
+    b1.rotation.y = Math.PI / 4;
+    const b2 = new THREE.Mesh(boomGeo, carbonMat);
+    b2.rotation.y = -Math.PI / 4;
+    group.add(b1, b2);
+
+    // 4 Ducted Rotors
+    group.rotors = [];
+    const rotorOffsets = [
+      { x: 0.85, z: 0.85 },
+      { x: -0.85, z: 0.85 },
+      { x: 0.85, z: -0.85 },
+      { x: -0.85, z: -0.85 }
+    ];
+
+    rotorOffsets.forEach(pos => {
+      // Guard ring
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(0.35, 0.04, 6, 16), carbonMat);
+      ring.position.set(pos.x, 0.1, pos.z);
+      ring.rotation.x = Math.PI / 2;
+      group.add(ring);
+
+      // Blades
+      const blade = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.02, 0.08), rotorMat);
+      blade.position.set(pos.x, 0.1, pos.z);
+      group.add(blade);
+      group.rotors.push(blade);
+    });
+
+    // Flashing Red/Blue Security Strobes
+    const redStrobe = new THREE.Mesh(new THREE.SphereGeometry(0.09, 6, 6), redStrobeMat);
+    redStrobe.position.set(-0.35, 0.22, 0);
+    const blueStrobe = new THREE.Mesh(new THREE.SphereGeometry(0.09, 6, 6), blueStrobeMat);
+    blueStrobe.position.set(0.35, 0.22, 0);
+    group.add(redStrobe, blueStrobe);
+    group.redStrobe = redStrobe;
+    group.blueStrobe = blueStrobe;
+
+    // Underslung Gimbal & Optical Stun Lens
+    const gimbal = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 8), carbonMat);
+    gimbal.position.set(0, -0.22, 0.15);
+    const lens = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.12, 8), cyanLaserLens);
+    lens.position.set(0, -0.3, 0.22);
+    lens.rotation.x = Math.PI / 2;
+    group.add(gimbal, lens);
+    group.gimbal = gimbal;
+
+    return group;
+  }
+
+  // Smartphone Prop (for pedestrians taking reels/filming drones)
+  createSmartphoneProp() {
+    const phoneGeo = new THREE.BoxGeometry(0.12, 0.22, 0.02);
+    const phoneMat = new THREE.MeshStandardMaterial({ color: 0x111827, metalness: 0.8, roughness: 0.3 });
+    const phone = new THREE.Mesh(phoneGeo, phoneMat);
+
+    const screenGeo = new THREE.PlaneGeometry(0.1, 0.18);
+    const screenMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+    const screen = new THREE.Mesh(screenGeo, screenMat);
+    screen.position.set(0, 0, 0.012);
+    phone.add(screen);
+
+    return phone;
+  }
 }

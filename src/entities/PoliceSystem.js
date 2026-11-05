@@ -2,6 +2,7 @@
 import * as THREE from 'three';
 import { ModelFactory } from '../world/ModelFactory.js';
 import { Vehicle } from './Vehicle.js';
+import { PoliceInterceptorDrone } from './PoliceInterceptorDrone.js';
 
 const _tempVec = new THREE.Vector3();
 
@@ -16,6 +17,7 @@ export class PoliceSystem {
     this.wantedLevel = 0; // 0 to 5
     this.policeOfficers = [];
     this.policeVehicles = [];
+    this.policeDrones = [];
 
     this.cooldownTimer = 0;
     this.isFlashingStars = false;
@@ -57,8 +59,12 @@ export class PoliceSystem {
       v.audioEngine?.playPoliceSiren(false);
       if (v.mesh.parent) v.mesh.parent.remove(v.mesh);
     });
+    this.policeDrones.forEach(d => {
+      if (d.mesh.parent) d.mesh.parent.remove(d.mesh);
+    });
     this.policeOfficers = [];
     this.policeVehicles = [];
+    this.policeDrones = [];
   }
 
   spawnPoliceResponse() {
@@ -106,9 +112,38 @@ export class PoliceSystem {
 
       this.policeVehicles.push(pVehicle);
     }
+
+    // Level 3+: Spawn Tactical Interceptor Drones
+    const maxDrones = Math.max(1, this.wantedLevel - 2);
+    if (this.wantedLevel >= 3 && this.policeDrones.length < maxDrones) {
+      const angle = Math.random() * Math.PI * 2;
+      const dist = 35 + Math.random() * 25;
+      const x = Math.cos(angle) * dist;
+      const z = Math.sin(angle) * dist;
+      const drone = new PoliceInterceptorDrone(
+        this.scene,
+        this.physics,
+        this.audioEngine,
+        this.particleSystem,
+        new THREE.Vector3(x, 18, z)
+      );
+      this.policeDrones.push(drone);
+    }
   }
 
-  update(delta, player) {
+  checkDroneDamage(origin, range, damage) {
+    for (let i = this.policeDrones.length - 1; i >= 0; i--) {
+      const drone = this.policeDrones[i];
+      if (drone.isDestroyed) continue;
+      if (drone.position.distanceTo(origin) <= range) {
+        drone.takeDamage(damage);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  update(delta, player, playerDrone = null, playerHeli = null) {
     if (this.wantedLevel === 0) return;
 
     const playerPos = player.position;
@@ -118,6 +153,16 @@ export class PoliceSystem {
     if (this.cooldownTimer <= 0) {
       this.setWantedLevel(this.wantedLevel - 1);
       return;
+    }
+
+    // Update Tactical Interceptor Drones
+    for (let i = this.policeDrones.length - 1; i >= 0; i--) {
+      const drone = this.policeDrones[i];
+      if (drone.isDestroyed) {
+        this.policeDrones.splice(i, 1);
+        continue;
+      }
+      drone.update(delta, player, playerDrone, playerHeli);
     }
 
     // Update Foot Officers

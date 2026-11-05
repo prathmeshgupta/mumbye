@@ -13,6 +13,7 @@ export class PedestrianManager {
     this.pedestrians = [];
     this.maxPedestrians = 28;
     this.droppedCash = []; // Collectible cash notes
+    this.droppedLoot = []; // Collectible contraband / black market loot
 
     // Bambaiya scream quotes
     this.panicQuotes = [
@@ -24,6 +25,20 @@ export class PedestrianManager {
       "Bhai maaf karo!",
       "Katt le beta fatfat!"
     ];
+
+    // Ambient crowd reaction quotes for low-flying drones & helicopters
+    this.aerialQuotes = [
+      "Aila! Dekh dekh, phone nikal, reel bana viral ho jayega!",
+      "Arre baap re! AstraCorp ka drone itna neeche ud raha hai!",
+      "Helicopter building ke itna paas aa gaya?!",
+      "Aye shana, helicopter ka hawa sab chhatri uda dega!",
+      "SkyEye surveillance chal raha hai boss!"
+    ];
+    this.aerialQuoteCooldown = 0;
+
+    window.addEventListener('mumbye_drone_loot_dropped', (e) => {
+      this.spawnLootDrop(e.detail.x, e.detail.z, e.detail.item);
+    });
   }
 
   spawnInitial(sidewalkNodes) {
@@ -58,7 +73,9 @@ export class PedestrianManager {
     return ped;
   }
 
-  update(delta, playerPos, sidewalkNodes) {
+  update(delta, player, sidewalkNodes, activeAircraft = []) {
+    const playerPos = player?.position || null;
+
     // Process dropped cash pickups
     for (let i = this.droppedCash.length - 1; i >= 0; i--) {
       const c = this.droppedCash[i];
@@ -72,11 +89,71 @@ export class PedestrianManager {
       }
     }
 
+    // Process dropped contraband / black market loot pickups
+    for (let i = this.droppedLoot.length - 1; i >= 0; i--) {
+      const l = this.droppedLoot[i];
+      l.mesh.rotation.y += delta * 3;
+      l.mesh.position.y = l.baseY + Math.sin(Date.now() * 0.005) * 0.06;
+
+      if (playerPos && playerPos.distanceTo(l.mesh.position) < 2.0) {
+        this.audioEngine?.playShopKaching();
+        if (player.addItem) {
+          player.addItem(l.item.id, l.item.name, l.item.value, 1);
+        }
+        window.dispatchEvent(new CustomEvent('mumbye_dialog_message', {
+          detail: { speaker: "Contraband Recovered", text: `Looted ${l.item.name}! Can be fenced at Chor Bazaar for ₹${l.item.value}.` }
+        }));
+        this.scene.remove(l.mesh);
+        this.droppedLoot.splice(i, 1);
+      }
+    }
+
+    // Aerial reaction check for low-flying drones or helicopters
+    if (this.aerialQuoteCooldown > 0) this.aerialQuoteCooldown -= delta;
+    let nearbyAircraft = null;
+    for (let j = 0; j < activeAircraft.length; j++) {
+      const craft = activeAircraft[j];
+      if (!craft) continue;
+      const isAirborne = craft.isActive || (craft.type === 'helicopter' && craft.isAirborne);
+      if (isAirborne) {
+        nearbyAircraft = craft;
+        break;
+      }
+    }
+
     // Update pedestrians
     for (let i = this.pedestrians.length - 1; i >= 0; i--) {
       const p = this.pedestrians[i];
 
       if (p.state === 'dead') continue;
+
+      // Check proximity to low-flying aircraft
+      let aircraftDist = 999;
+      if (nearbyAircraft) {
+        const horizDist = new THREE.Vector2(p.mesh.position.x - nearbyAircraft.position.x, p.mesh.position.z - nearbyAircraft.position.z).length();
+        const vertDist = Math.abs(nearbyAircraft.position.y - p.mesh.position.y);
+        if (horizDist < 24.0 && vertDist < 20.0) {
+          aircraftDist = horizDist;
+          if (horizDist < 8.0 && vertDist < 8.0 && nearbyAircraft.type === 'helicopter') {
+            p.state = 'cower';
+          } else if (p.state !== 'flee' && p.state !== 'cower') {
+            p.state = 'film';
+          }
+
+          // Trigger ambient crowd quote
+          if (this.aerialQuoteCooldown <= 0 && Math.random() < 0.15) {
+            this.aerialQuoteCooldown = 7.0;
+            const quote = this.aerialQuotes[Math.floor(Math.random() * this.aerialQuotes.length)];
+            window.dispatchEvent(new CustomEvent('mumbye_dialog_message', {
+              detail: { speaker: "Mumbai Local Bystander", text: quote }
+            }));
+          }
+        } else if (p.state === 'film' || p.state === 'cower') {
+          p.state = 'wander';
+        }
+      } else if (p.state === 'film' || p.state === 'cower') {
+        p.state = 'wander';
+      }
 
       if (p.state === 'flee') {
         p.fleeTimer -= delta;
@@ -88,7 +165,32 @@ export class PedestrianManager {
           p.mesh.rotation.y = Math.atan2(awayDir.x, awayDir.z);
           p.mesh.position.addScaledVector(awayDir, p.speed * 2.2 * delta);
         }
+      } else if (p.state === 'film') {
+        // Pedestrian stops, faces the aircraft, and points phone upward
+        if (nearbyAircraft) {
+          const toCraft = nearbyAircraft.position.clone().sub(p.mesh.position);
+          p.mesh.rotation.y = THREE.MathUtils.lerp(p.mesh.rotation.y, Math.atan2(toCraft.x, toCraft.z), delta * 5.0);
+
+          if (p.mesh.joints) {
+            // Right arm points phone upward
+            p.mesh.joints.armR.rotation.x = THREE.MathUtils.lerp(p.mesh.joints.armR.rotation.x, -1.35, delta * 6.0);
+            p.mesh.joints.armL.rotation.x = THREE.MathUtils.lerp(p.mesh.joints.armL.rotation.x, 0, delta * 6.0);
+            p.mesh.joints.head.rotation.x = THREE.MathUtils.lerp(p.mesh.joints.head.rotation.x, -0.45, delta * 6.0);
+          }
+        }
+      } else if (p.state === 'cower') {
+        // Pedestrian crouches with hands shielding head from downwash
+        if (p.mesh.joints) {
+          p.mesh.joints.armR.rotation.x = -2.1;
+          p.mesh.joints.armL.rotation.x = -2.1;
+          p.mesh.joints.head.rotation.x = 0.5;
+        }
       } else {
+        // Reset arms and head from film/cower
+        if (p.mesh.joints && (p.mesh.joints.head.rotation.x !== 0)) {
+          p.mesh.joints.head.rotation.x = THREE.MathUtils.lerp(p.mesh.joints.head.rotation.x, 0, delta * 6.0);
+        }
+
         // Wander toward target
         const distToTarget = p.mesh.position.distanceTo(p.wanderTarget);
         if (distToTarget < 2.0 || Math.random() < 0.005) {
@@ -114,14 +216,16 @@ export class PedestrianManager {
       const groundY = this.physics.getGroundHeight(p.mesh.position.x, p.mesh.position.z);
       p.mesh.position.y = groundY;
 
-      // Animate walking joints
-      p.animTime += delta * (p.state === 'flee' ? 14 : 7);
-      const swing = Math.sin(p.animTime);
-      if (p.mesh.joints) {
-        p.mesh.joints.legL.rotation.x = swing * 0.6;
-        p.mesh.joints.legR.rotation.x = -swing * 0.6;
-        p.mesh.joints.armL.rotation.x = -swing * 0.5;
-        p.mesh.joints.armR.rotation.x = swing * 0.5;
+      // Animate walking joints (only when wandering or fleeing)
+      if (p.state === 'wander' || p.state === 'flee') {
+        p.animTime += delta * (p.state === 'flee' ? 14 : 7);
+        const swing = Math.sin(p.animTime);
+        if (p.mesh.joints) {
+          p.mesh.joints.legL.rotation.x = swing * 0.6;
+          p.mesh.joints.legR.rotation.x = -swing * 0.6;
+          p.mesh.joints.armL.rotation.x = -swing * 0.5;
+          p.mesh.joints.armR.rotation.x = swing * 0.5;
+        }
       }
     }
   }
@@ -174,6 +278,16 @@ export class PedestrianManager {
     const amount = 20 + Math.floor(Math.random() * 5) * 20;
     this.spawnCashDrop(p.mesh.position.x, p.mesh.position.z, amount);
 
+    // 35% chance to drop fenceable contraband for Chor Bazaar Black Market
+    if (Math.random() < 0.35) {
+      const contrabandTypes = [
+        { id: 'stolen_watch', name: 'Smuggled Luxury Watch', value: 800, color: 0xf59e0b },
+        { id: 'antique_necklace', name: 'Vintage Gold Necklace', value: 1500, color: 0xfbbf24 }
+      ];
+      const item = contrabandTypes[Math.floor(Math.random() * contrabandTypes.length)];
+      this.spawnLootDrop(p.mesh.position.x + (Math.random() - 0.5) * 0.8, p.mesh.position.z + (Math.random() - 0.5) * 0.8, item);
+    }
+
     window.dispatchEvent(new CustomEvent('mumbye_pedestrian_killed'));
   }
 
@@ -185,5 +299,23 @@ export class PedestrianManager {
     this.scene.add(mesh);
 
     this.droppedCash.push({ mesh, amount });
+  }
+
+  spawnLootDrop(x, z, item) {
+    // 3D Contraband Loot Pickup (Glowing diamond / jewel box)
+    const lootGeo = new THREE.BoxGeometry(0.35, 0.25, 0.35);
+    const lootMat = new THREE.MeshStandardMaterial({
+      color: item.color || 0x06b6d4,
+      metalness: 0.8,
+      roughness: 0.2,
+      emissive: item.color || 0x06b6d4,
+      emissiveIntensity: 0.4
+    });
+    const mesh = new THREE.Mesh(lootGeo, lootMat);
+    const baseY = 0.35;
+    mesh.position.set(x, baseY, z);
+    this.scene.add(mesh);
+
+    this.droppedLoot.push({ mesh, baseY, item });
   }
 }

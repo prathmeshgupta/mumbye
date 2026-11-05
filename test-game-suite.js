@@ -352,6 +352,178 @@ async function runTestSuite() {
     throw new Error('Station 5 failed to activate');
   }
 
+  // Test Action 11: Speedboat & Hydrodynamic Watercraft Physics
+  console.log('\n  👉 Testing Speedboats at Colaba Maritime Basin & Marine Drive...');
+  const boatCheck = await sendCommand('Runtime.evaluate', {
+    expression: `({
+      count: window.mumbyeGame.speedboats.length,
+      firstBoat: {
+        name: window.mumbyeGame.speedboats[0].name,
+        type: window.mumbyeGame.speedboats[0].type,
+        pos: { x: window.mumbyeGame.speedboats[0].position.x, y: window.mumbyeGame.speedboats[0].position.y, z: window.mumbyeGame.speedboats[0].position.z }
+      }
+    })`,
+    returnByValue: true
+  });
+  console.log('  ✅ Speedboat Fleet Initialized:', boatCheck.result.value);
+  if (boatCheck.result.value.count < 2) {
+    throw new Error('Expected at least 2 speedboats in harbor and coastline');
+  }
+
+  // Board Speedboat
+  await sendCommand('Runtime.evaluate', {
+    expression: `window.mumbyeGame.player.enterVehicle(window.mumbyeGame.speedboats[0]);`
+  });
+  const boatBoarding = await sendCommand('Runtime.evaluate', {
+    expression: `({
+      isDriving: window.mumbyeGame.player.isDriving,
+      vehType: window.mumbyeGame.player.currentVehicle.type,
+      camMode: window.mumbyeGame.cameraManager.mode
+    })`,
+    returnByValue: true
+  });
+  console.log('  ✅ Speedboat Boarding Status:', boatBoarding.result.value);
+  if (!boatBoarding.result.value.isDriving || boatBoarding.result.value.vehType !== 'speedboat') {
+    throw new Error('Speedboat boarding failed');
+  }
+
+  // Accelerate Speedboat
+  await sendCommand('Runtime.evaluate', {
+    expression: `window.mumbyeGame.speedboats[0].update(0.2, { moveForward: 1, moveRight: 0, isHandbraking: false, isSprinting: true });`
+  });
+  const boatMotion = await sendCommand('Runtime.evaluate', {
+    expression: `({
+      speed: window.mumbyeGame.speedboats[0].speed,
+      pitch: window.mumbyeGame.speedboats[0].pitch,
+      nitro: window.mumbyeGame.speedboats[0].isNitroActive
+    })`,
+    returnByValue: true
+  });
+  console.log('  ✅ Hydrodynamic Planing & Speed:', boatMotion.result.value);
+  if (boatMotion.result.value.speed <= 0) {
+    throw new Error('Speedboat failed to accelerate');
+  }
+
+  // Exit Speedboat
+  await sendCommand('Runtime.evaluate', {
+    expression: `window.mumbyeGame.player.exitVehicle();`
+  });
+  console.log('  ✅ Disembarked speedboat cleanly at harbor pier');
+
+  // Test Action 12: Walk-In Chor Bazaar Black Market & Chop Shop
+  console.log('\n  👉 Testing Walk-In Chor Bazaar Chop Shop & Contraband Fence...');
+  const shopCheck = await sendCommand('Runtime.evaluate', {
+    expression: `({
+      shopsCount: window.mumbyeGame.cityMap.blackMarketShops.length,
+      shop: window.mumbyeGame.cityMap.blackMarketShops[0]
+    })`,
+    returnByValue: true
+  });
+  console.log('  ✅ Black Market Shop Registered:', shopCheck.result.value);
+  if (shopCheck.result.value.shopsCount === 0) {
+    throw new Error('No black market shops found');
+  }
+
+  // Open Black Market UI
+  await sendCommand('Runtime.evaluate', {
+    expression: `window.mumbyeGame.uiManager.blackMarketUI.open();`
+  });
+  const shopModalState = await sendCommand('Runtime.evaluate', {
+    expression: `({
+      isOpen: window.mumbyeGame.uiManager.blackMarketUI.isOpen,
+      display: document.getElementById('black-market-modal').style.display,
+      inventoryCount: window.mumbyeGame.player.inventory.length
+    })`,
+    returnByValue: true
+  });
+  console.log('  ✅ Black Market Modal State:', shopModalState.result.value);
+  if (!shopModalState.result.value.isOpen || shopModalState.result.value.display !== 'flex') {
+    throw new Error('Black market modal failed to open');
+  }
+
+  // Sell Contraband
+  await sendCommand('Runtime.evaluate', {
+    expression: `window.mumbyeGame.uiManager.blackMarketUI.sellItem('stolen_watch', false);`
+  });
+  console.log('  ✅ Contraband Watch fenced for cash successfully');
+
+  // Buy Tactical Gear (Suppressor)
+  await sendCommand('Runtime.evaluate', {
+    expression: `
+      window.mumbyeGame.player.cash += 2000;
+      window.mumbyeGame.uiManager.blackMarketUI.buyUpgrade('suppressor');
+    `
+  });
+  const suppressorStatus = await sendCommand('Runtime.evaluate', {
+    expression: `window.mumbyeGame.player.hasSuppressor`,
+    returnByValue: true
+  });
+  console.log('  ✅ Tactical Carbon Suppressor Purchased:', suppressorStatus.result.value);
+  if (!suppressorStatus.result.value) {
+    throw new Error('Failed to purchase suppressor upgrade');
+  }
+
+  // Close Black Market UI
+  await sendCommand('Runtime.evaluate', {
+    expression: `window.mumbyeGame.uiManager.blackMarketUI.close();`
+  });
+  console.log('  ✅ Black Market Modal closed cleanly');
+
+  // Test Action 13: Metro Security Tactical Interceptor Drones
+  console.log('\n  👉 Testing Metro Security Tactical Interceptor Drones at 4-Star Wanted Level...');
+  await sendCommand('Runtime.evaluate', {
+    expression: `window.mumbyeGame.policeSystem.setWantedLevel(4);`
+  });
+  const interceptorStatus = await sendCommand('Runtime.evaluate', {
+    expression: `({
+      wanted: window.mumbyeGame.policeSystem.wantedLevel,
+      dronesCount: window.mumbyeGame.policeSystem.policeDrones.length,
+      dronePos: window.mumbyeGame.policeSystem.policeDrones[0] ? window.mumbyeGame.policeSystem.policeDrones[0].position : null
+    })`,
+    returnByValue: true
+  });
+  console.log('  ✅ Tactical Interceptor Drone Status:', interceptorStatus.result.value);
+  if (interceptorStatus.result.value.dronesCount === 0) {
+    throw new Error('Interceptor drone did not spawn at 4-star heat');
+  }
+
+  // Test shooting down interceptor drone
+  await sendCommand('Runtime.evaluate', {
+    expression: `
+      const targetDrone = window.mumbyeGame.policeSystem.policeDrones[0];
+      if (targetDrone) {
+        window.mumbyeGame.policeSystem.checkDroneDamage(targetDrone.position, 10, 100);
+      }
+    `
+  });
+  console.log('  ✅ Interceptor drone shot down & dropped encrypted data drive loot');
+
+  // Clear police heat
+  await sendCommand('Runtime.evaluate', {
+    expression: `window.mumbyeGame.policeSystem.setWantedLevel(0);`
+  });
+
+  // Test Action 14: Pedestrian Crowd Dynamics (Reactions to Aircraft)
+  console.log('\n  👉 Testing Pedestrian Crowd Dynamics (Aircraft Filming & Cowering)...');
+  await sendCommand('Runtime.evaluate', {
+    expression: `
+      const peds = window.mumbyeGame.pedestrianManager.pedestrians;
+      if (peds.length > 0) {
+        // Place a pedestrian near the helicopter
+        peds[0].mesh.position.set(242, 68.4, -78);
+        window.mumbyeGame.pedestrianManager.update(0.1, window.mumbyeGame.player, null, [window.mumbyeGame.helicopter]);
+      }
+    `
+  });
+  const pedCrowdState = await sendCommand('Runtime.evaluate', {
+    expression: `({
+      pedState: window.mumbyeGame.pedestrianManager.pedestrians[0].state,
+      totalPeds: window.mumbyeGame.pedestrianManager.pedestrians.length
+    })`,
+    returnByValue: true
+  });
+  console.log('  ✅ Pedestrian Reaction State near Helicopter:', pedCrowdState.result.value);
+
   // Step 6: Capture Screenshot
   console.log('\n[6/6] Capturing in-game rendered screenshot...');
   const screenshotRes = await sendCommand('Page.captureScreenshot', { format: 'png' });

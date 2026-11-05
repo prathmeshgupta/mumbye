@@ -49,6 +49,18 @@ export class Player {
     this.weaponMesh = null;
     this.attackCooldown = 0;
 
+    // Contraband & Gear Inventory (Fenced at Chor Bazaar Black Market)
+    this.inventory = [
+      { id: 'stolen_watch', name: 'Smuggled Luxury Watch', value: 800, count: 1 },
+      { id: 'data_drive', name: 'Encrypted AstraCorp Data Drive', value: 1200, count: 1 },
+      { id: 'antique_necklace', name: 'Vintage Gold Necklace', value: 1500, count: 0 },
+      { id: 'drone_core', name: 'Salvaged Drone Power Core', value: 600, count: 0 }
+    ];
+    this.hasSuppressor = false;
+    this.hasNitroKit = false;
+    this.droneBatteryMultiplier = 1.0;
+    this.droneTaserMultiplier = 1.0;
+
     // Animation state
     this.animTime = 0;
     this.footstepTimer = 0;
@@ -94,7 +106,7 @@ export class Player {
     this.equipWeapon(next);
   }
 
-  update(delta, input, vehicles = [], interactiveStalls = [], elevatorPads = []) {
+  update(delta, input, vehicles = [], interactiveStalls = [], elevatorPads = [], blackMarketShops = []) {
     if (this.isDead) return;
 
     if (this.attackCooldown > 0) this.attackCooldown -= delta;
@@ -109,8 +121,40 @@ export class Player {
     this.handleVehicleInteraction(input, vehicles);
     this.handleStallInteraction(input, interactiveStalls);
     this.handleElevatorInteraction(input, elevatorPads);
+    this.handleBlackMarketInteraction(input, blackMarketShops);
     this.handleCombat(delta, input);
     this.animateJoints(delta, input);
+  }
+
+  handleBlackMarketInteraction(input, blackMarketShops = []) {
+    if (!input.wasJustPressed('KeyE')) return;
+    for (let i = 0; i < blackMarketShops.length; i++) {
+      const shop = blackMarketShops[i];
+      if (this.position.distanceTo(shop.position) < 3.2) {
+        window.dispatchEvent(new CustomEvent('mumbye_open_black_market', { detail: { shop } }));
+        return;
+      }
+    }
+  }
+
+  addItem(id, name, value, count = 1) {
+    let item = this.inventory.find(i => i.id === id);
+    if (item) {
+      item.count += count;
+    } else {
+      this.inventory.push({ id, name, value, count });
+    }
+    window.dispatchEvent(new CustomEvent('mumbye_inventory_changed', { detail: { inventory: this.inventory } }));
+  }
+
+  removeItem(id, count = 1) {
+    let item = this.inventory.find(i => i.id === id);
+    if (item && item.count >= count) {
+      item.count -= count;
+      window.dispatchEvent(new CustomEvent('mumbye_inventory_changed', { detail: { inventory: this.inventory } }));
+      return true;
+    }
+    return false;
   }
 
   handleElevatorInteraction(input, elevatorPads = []) {
@@ -285,7 +329,8 @@ export class Player {
           damage: weapon.damage,
           origin: muzzlePos,
           direction: aimDir,
-          range: 80
+          range: 80,
+          hasSuppressor: this.hasSuppressor
         }
       }));
     }
@@ -325,6 +370,10 @@ export class Player {
       vehicle.enter();
       this.cameraManager.setTargetHelicopter(vehicle);
       this.cameraManager.setMode('helicopter');
+    } else if (vehicle.type === 'speedboat') {
+      vehicle.enter();
+      this.cameraManager.setTargetVehicle(vehicle);
+      this.cameraManager.setMode('in_vehicle');
     } else {
       // Start ground vehicle engine sound
       this.audioEngine?.startVehicleEngine(vehicle.type);
@@ -344,6 +393,13 @@ export class Player {
     if (v.type === 'helicopter') {
       v.exit();
       this.mesh.position.set(v.position.x + 2.5, v.position.y, v.position.z);
+    } else if (v.type === 'speedboat') {
+      v.exit();
+      const exitOffset = new THREE.Vector3(2.4, 0.6, 0)
+        .applyAxisAngle(new THREE.Vector3(0, 1, 0), v.rotation.y);
+      this.mesh.position.copy(v.position).add(exitOffset);
+      const groundY = this.physics.getGroundHeight(this.mesh.position.x, this.mesh.position.z);
+      this.mesh.position.y = Math.max(0.2, groundY);
     } else {
       // Position player just outside vehicle driver door
       const exitOffset = new THREE.Vector3(v.width * 0.7 + 0.8, 0, 0)

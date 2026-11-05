@@ -4,6 +4,7 @@ import { PhoneUI } from './PhoneUI.js';
 import { DLCModal } from './DLCModal.js';
 import { DialogBox } from './DialogBox.js';
 import { PauseMenu } from './PauseMenu.js';
+import { BlackMarketUI } from './BlackMarketUI.js';
 
 export class UIManager {
   constructor(game) {
@@ -15,6 +16,7 @@ export class UIManager {
     this.dlcModal = null;
     this.dialogBox = null;
     this.pauseMenu = null;
+    this.blackMarketUI = null;
 
     // HUD Elements
     this.healthBar = null;
@@ -43,6 +45,7 @@ export class UIManager {
     this.dlcModal = new DLCModal(this.game.dlcManager);
     this.dialogBox = new DialogBox();
     this.pauseMenu = new PauseMenu(this.game);
+    this.blackMarketUI = new BlackMarketUI(this.game);
 
     // Cache HUD DOM references
     this.healthBar = document.getElementById('hud-health-fill');
@@ -239,10 +242,33 @@ export class UIManager {
     if (player.isDriving) {
       if (player.currentVehicle?.type === 'helicopter') {
         this.setActionPrompt("[E] Exit Helicopter &nbsp;|&nbsp; [Space/Shift] Altitude Climb &nbsp;|&nbsp; [WASD] Pitch & Rudder");
+      } else if (player.currentVehicle?.type === 'speedboat') {
+        this.setActionPrompt("[E] Dock / Exit Speedboat &nbsp;|&nbsp; [WASD] Throttle & Rudder &nbsp;|&nbsp; [Shift] Nitro Boost &nbsp;|&nbsp; [Space] Hydro-Brake");
       } else {
         this.setActionPrompt("[E] Exit Vehicle &nbsp;|&nbsp; [H] Horn &nbsp;|&nbsp; [R] Radio");
       }
       return;
+    }
+
+    // Check near Black Market Shop counter
+    const blackMarketShops = this.game.cityMap?.blackMarketShops || [];
+    for (let i = 0; i < blackMarketShops.length; i++) {
+      const shop = blackMarketShops[i];
+      if (player.position.distanceTo(shop.position) < 3.2) {
+        this.setActionPrompt(`[E] Open ${shop.label}`);
+        return;
+      }
+    }
+
+    // Check near speedboat
+    const speedboats = this.game.speedboats || [];
+    for (let i = 0; i < speedboats.length; i++) {
+      const boat = speedboats[i];
+      if (boat.isDestroyed) continue;
+      if (player.position.distanceTo(boat.position) < 4.8) {
+        this.setActionPrompt(`[E] Board ${boat.name}`);
+        return;
+      }
     }
 
     // Check near helicopter

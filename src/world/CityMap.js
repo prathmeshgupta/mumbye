@@ -25,6 +25,8 @@ export class CityMap {
 
     // Elevator / Teleport pads
     this.elevatorPads = [];
+    this.blackMarketShops = [];
+    this.speedboats = [];
   }
 
   // Generate Procedural Building Facade Textures with Windows and Lights
@@ -130,6 +132,8 @@ export class CityMap {
     this.buildBandraWorliSeaLink();
     this.buildRailwayCorridor();
     this.buildPropsAndStalls();
+
+    this.blackMarketShops = this.props.blackMarketShops || [];
   }
 
   // Arabian Sea (Optimized High-Performance Water)
@@ -304,6 +308,9 @@ export class CityMap {
 
     // Bollywood Billboard atop Marine Drive Tower
     this.props.createBollywoodBillboard(-20, 36, 0, 16, 7, "BHAI: RETURN OF MAXIMUM CITY");
+
+    // Marine Drive Seaside Boat Pier into the Arabian Sea
+    this.props.createBoatPier(-62, -10, 18, 4.0, -Math.PI / 2);
   }
 
   // District 2: Gateway of India, Fort & Metro General Hospital
@@ -383,6 +390,9 @@ export class CityMap {
         }
       }
     }
+
+    // Walk-In Chor Bazaar Chop Shop & Contraband Fence at x: 95, z: 25
+    this.props.createWalkInShop(95, 25, "Chor Bazaar Chop Shop & Black Market");
   }
 
   // District 4: BKC Cyber City (Futuristic High-Tech Hub & Helipad)
@@ -475,6 +485,10 @@ export class CityMap {
     // Heavy Harbor Cargo Cranes
     this.props.createCargoCrane(285, 90);
     this.props.createCargoCrane(285, 145);
+
+    // Harbor Wooden Piers for Speedboats
+    this.props.createBoatPier(280, 105, 20, 4.2, 0);
+    this.props.createBoatPier(280, 145, 20, 4.2, 0);
 
     // Dockworkers Chai & Vada Pav Tapri
     this.props.createVadaPavStall(236, 68, 0);

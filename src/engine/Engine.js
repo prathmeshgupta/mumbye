@@ -18,6 +18,7 @@ import { DLCManager } from '../dlc/DLCManager.js';
 import { UIManager } from '../ui/UIManager.js';
 import { Drone } from '../entities/Drone.js';
 import { Helicopter } from '../entities/Helicopter.js';
+import { Speedboat } from '../entities/Speedboat.js';
 
 // Bundled DLCs
 import { BandraDriftDLC } from '../dlc/bundled/BandraDriftDLC.js';
@@ -87,6 +88,31 @@ export class Engine {
     this.helicopter.groundY = 68.4;
     this.cameraManager.setTargetHelicopter(this.helicopter);
 
+    // Speedboats at Colaba Maritime Docks & Marine Drive Pier
+    this.speedboats = [];
+
+    // Speedboat 1: Civilian Ocean Racer at Colaba Pier 1 (x: 282, z: 115)
+    const boatMesh1 = this.factory.createSpeedboat({ color: 0x0284c7 });
+    boatMesh1.position.set(282, -0.4, 115);
+    this.scene.add(boatMesh1);
+    const boat1 = new Speedboat(boatMesh1, { name: 'Colaba Ocean Racer' }, this.audioEngine, this.particleSystem, this.physics);
+    this.speedboats.push(boat1);
+
+    // Speedboat 2: Metro Security Harbor Patrol at Colaba Pier 2 (x: 282, z: 155)
+    const boatMesh2 = this.factory.createSpeedboat({ isPolice: true });
+    boatMesh2.position.set(282, -0.4, 155);
+    this.scene.add(boatMesh2);
+    const boat2 = new Speedboat(boatMesh2, { name: 'Metro Harbor Patrol', isPolice: true }, this.audioEngine, this.particleSystem, this.physics);
+    this.speedboats.push(boat2);
+
+    // Speedboat 3: Marine Drive Sport Cruiser in Arabian Sea (x: -74, z: -10)
+    const boatMesh3 = this.factory.createSpeedboat({ color: 0xd97706 });
+    boatMesh3.position.set(-74, -0.4, -10);
+    boatMesh3.rotation.y = -Math.PI / 2;
+    this.scene.add(boatMesh3);
+    const boat3 = new Speedboat(boatMesh3, { name: 'Marine Drive Speed-Demon' }, this.audioEngine, this.particleSystem, this.physics);
+    this.speedboats.push(boat3);
+
     // Gameplay
     this.missionManager = new MissionManager(this.audioEngine);
     this.currentNeighborhoodId = null;
@@ -133,13 +159,15 @@ export class Engine {
 
     // Player attack listener (punches, melee swings, gunshots)
     window.addEventListener('mumbye_player_attack', (e) => {
-      const { type, damage, origin, direction, range } = e.detail;
+      const { type, damage, origin, direction, range, hasSuppressor } = e.detail;
 
-      // Gunshots alert pedestrians and police
+      // Gunshots alert pedestrians and police (suppressed if hasSuppressor)
       if (type === 'gun') {
-        this.pedestrianManager.alertGunshot(origin);
-        if (Math.random() < 0.4) {
-          this.policeSystem.addCrime(1);
+        if (!hasSuppressor) {
+          this.pedestrianManager.alertGunshot(origin);
+          if (Math.random() < 0.4) {
+            this.policeSystem.addCrime(1);
+          }
         }
       }
 
@@ -148,6 +176,22 @@ export class Engine {
       if (hitPed) {
         this.policeSystem.addCrime(1);
       }
+
+      // Check hit on police interceptor drones
+      this.policeSystem.checkDroneDamage(origin, range, damage);
+
+      // Check hit on speedboats
+      this.speedboats.forEach(b => {
+        if (b.isPlayerDriving || b.isDestroyed) return;
+        const dist = b.position.distanceTo(origin);
+        if (dist < range + 2) {
+          const toBoat = b.position.clone().sub(origin).normalize();
+          if (direction.dot(toBoat) > 0.6) {
+            b.takeDamage(damage);
+            this.particleSystem.spawnSparks(b.position);
+          }
+        }
+      });
 
       // Check hit on vehicles
       const vehicles = this.trafficManager.getAllVehicles();
@@ -267,15 +311,22 @@ export class Engine {
     // Update Helicopter
     this.helicopter.update(delta, this.input);
 
+    // Update Speedboats
+    this.speedboats.forEach(b => {
+      if (b.isPlayerDriving) b.update(delta, this.input);
+      else b.update(delta);
+    });
+
     // Update Player & Vehicles (if drone is not active)
-    const allVehicles = [...this.trafficManager.getAllVehicles(), this.helicopter];
+    const allVehicles = [...this.trafficManager.getAllVehicles(), this.helicopter, ...this.speedboats];
     const stalls = this.cityMap.props?.interactiveStalls || [];
     const elevatorPads = this.cityMap.elevatorPads || [];
+    const blackMarketShops = this.cityMap.blackMarketShops || [];
     if (!this.drone.isActive) {
-      this.player.update(delta, this.input, allVehicles, stalls, elevatorPads);
+      this.player.update(delta, this.input, allVehicles, stalls, elevatorPads, blackMarketShops);
 
-      // If player is driving, update player's vehicle
-      if (this.player.isDriving && this.player.currentVehicle && this.player.currentVehicle !== this.helicopter) {
+      // If player is driving road vehicle or non-helicopter/speedboat
+      if (this.player.isDriving && this.player.currentVehicle && this.player.currentVehicle !== this.helicopter && this.player.currentVehicle.type !== 'speedboat') {
         this.player.currentVehicle.update(delta, this.input);
       }
     }
@@ -289,9 +340,10 @@ export class Engine {
     }
 
     // Update Traffic, Pedestrians & Police
+    const activeAircraft = [this.drone, this.helicopter, ...(this.policeSystem.policeDrones || [])];
     this.trafficManager.update(delta, this.player.position, this.cityMap.roadNodes);
-    this.pedestrianManager.update(delta, this.player.position, this.cityMap.sidewalkNodes);
-    this.policeSystem.update(delta, this.player);
+    this.pedestrianManager.update(delta, this.player, this.cityMap.sidewalkNodes, activeAircraft);
+    this.policeSystem.update(delta, this.player, this.drone, this.helicopter);
     this.trainSystem.update(delta, this.player.position);
 
     // Update Missions & DLC

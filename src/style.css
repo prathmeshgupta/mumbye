@@ -1360,3 +1360,244 @@ input:checked + .slider:before { transform: translateX(20px); }
 .invest-btn:hover {
   background: #10b981;
 }
+
+/* Chor Bazaar Black Market & Chop Shop Modal */
+#black-market-modal {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.market-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(8, 10, 16, 0.85);
+  backdrop-filter: blur(6px);
+}
+.market-container {
+  position: relative;
+  width: 90%;
+  max-width: 700px;
+  max-height: 85vh;
+  background: #111827;
+  border: 2px solid #f59e0b;
+  border-radius: 12px;
+  box-shadow: 0 12px 36px rgba(245, 158, 11, 0.25), 0 0 50px rgba(0, 0, 0, 0.95);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-family: 'Rajdhani', 'Montserrat', sans-serif;
+  color: #f8fafc;
+}
+.market-header {
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #1c1917, #292524);
+  border-bottom: 1px solid #78350f;
+  position: relative;
+}
+.market-badge {
+  display: inline-block;
+  background: #f59e0b;
+  color: #000;
+  font-weight: 800;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  letter-spacing: 1px;
+  margin-bottom: 4px;
+}
+.market-title {
+  font-size: 24px;
+  font-weight: 900;
+  color: #fbbf24;
+  margin: 0;
+  letter-spacing: 0.5px;
+}
+.market-subtitle {
+  font-size: 12px;
+  color: #cbd5e1;
+  margin-top: 2px;
+}
+.market-close-btn {
+  position: absolute;
+  top: 16px;
+  right: 18px;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: #fff;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+.market-close-btn:hover {
+  background: #ef4444;
+}
+.market-tabs {
+  display: flex;
+  background: #18181b;
+  border-bottom: 1px solid #3f3f46;
+}
+.market-tab-btn {
+  flex: 1;
+  padding: 12px;
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-weight: 800;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s, border-bottom 0.15s;
+  border-bottom: 3px solid transparent;
+}
+.market-tab-btn.active {
+  color: #fbbf24;
+  background: #27272a;
+  border-bottom-color: #f59e0b;
+}
+.market-body {
+  padding: 18px;
+  overflow-y: auto;
+  flex: 1;
+}
+.market-items-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.market-card {
+  display: flex;
+  align-items: center;
+  background: #1f2937;
+  border: 1px solid #374151;
+  border-radius: 8px;
+  padding: 12px 14px;
+  gap: 14px;
+  transition: transform 0.15s, border-color 0.15s;
+}
+.market-card:hover {
+  border-color: #f59e0b;
+  transform: translateY(-1px);
+}
+.market-card .card-icon {
+  font-size: 28px;
+  width: 44px;
+  height: 44px;
+  background: #111827;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.market-card .card-info {
+  flex: 1;
+}
+.market-card .card-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #f8fafc;
+}
+.market-card .card-sub {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+.market-card .card-price {
+  font-size: 13px;
+  color: #fbbf24;
+  margin-top: 4px;
+}
+.card-actions {
+  display: flex;
+  gap: 8px;
+}
+.market-btn-sell, .market-btn-sell-all, .market-btn-buy {
+  background: #f59e0b;
+  color: #000;
+  border: none;
+  font-weight: 800;
+  font-size: 12px;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.15s;
+}
+.market-btn-sell:hover, .market-btn-sell-all:hover, .market-btn-buy:hover {
+  background: #fbbf24;
+  transform: translateY(-1px);
+}
+.market-btn-sell-all {
+  background: #d97706;
+  color: #fff;
+}
+.market-btn-buy[disabled] {
+  background: #4b5563;
+  color: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+}
+.market-btn-owned {
+  background: #065f46;
+  color: #6ee7b7;
+  border: 1px solid #059669;
+  font-weight: 800;
+  font-size: 12px;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: default;
+}
+.market-empty-state {
+  text-align: center;
+  padding: 40px 20px;
+}
+.market-empty-state .empty-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+.market-empty-state .empty-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: #f1f5f9;
+}
+.market-empty-state .empty-sub {
+  font-size: 13px;
+  color: #94a3b8;
+  max-width: 440px;
+  margin: 6px auto 0;
+  line-height: 1.4;
+}
+.market-footer {
+  padding: 12px 20px;
+  background: #18181b;
+  border-top: 1px solid #27272a;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.market-cash-badge {
+  font-size: 15px;
+  font-weight: 800;
+  color: #22c55e;
+}
+.market-cash-badge span {
+  font-size: 18px;
+  font-weight: 900;
+}
+.market-tip {
+  font-size: 11px;
+  color: #64748b;
+}
