@@ -36,8 +36,8 @@ export class Weather {
     this.sunLight = new THREE.DirectionalLight(0xfff5e6, 1.2);
     this.sunLight.position.set(100, 150, 100);
     this.sunLight.castShadow = true;
-    this.sunLight.shadow.mapSize.width = 2048;
-    this.sunLight.shadow.mapSize.height = 2048;
+    this.sunLight.shadow.mapSize.width = 1024;
+    this.sunLight.shadow.mapSize.height = 1024;
     this.sunLight.shadow.camera.near = 0.5;
     this.sunLight.shadow.camera.far = 500;
     const d = 120;

@@ -232,7 +232,7 @@ namespace Mumbye
                 ProcessStartInfo psi = new ProcessStartInfo();
                 psi.FileName = browserPath;
                 psi.Arguments = string.Format(
-                    "--app=\"{0}\" --window-size=1280,780 --disable-infobars --no-first-run --no-default-browser-check --user-data-dir=\"{1}\"",
+                    "--app=\"{0}\" --window-size=1280,780 --disable-infobars --no-first-run --no-default-browser-check --ignore-gpu-blocklist --enable-gpu-rasterization --enable-zero-copy --use-gl=angle --use-angle=d3d11 --enable-accelerated-2d-canvas --user-data-dir=\"{1}\"",
                     url,
                     tempProfileDir
                 );
