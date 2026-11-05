@@ -72,6 +72,10 @@ export class UIManager {
       this.showRadioPill(e.detail.name, e.detail.genre);
     });
 
+    window.addEventListener('mumbye_neighborhood_entered', (e) => {
+      this.showNeighborhoodBanner(e.detail);
+    });
+
     // Instructions toggle
     document.getElementById('hud-help-btn')?.addEventListener('click', () => {
       const help = document.getElementById('controls-modal');
@@ -96,6 +100,25 @@ export class UIManager {
     setTimeout(() => {
       if (this.radioPillEl) this.radioPillEl.style.opacity = '0';
     }, 3200);
+  }
+
+  showNeighborhoodBanner(district) {
+    let el = document.getElementById('hud-district-banner');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'hud-district-banner';
+      document.body.appendChild(el);
+    }
+    el.innerHTML = `
+      <div class="district-badge" style="border-left-color: ${district.color || '#06b6d4'}">
+        <div class="district-title">📍 ${district.name}</div>
+        <div class="district-sub">${district.sub}</div>
+      </div>
+    `;
+    el.classList.add('show-banner');
+    setTimeout(() => {
+      el.classList.remove('show-banner');
+    }, 3800);
   }
 
   setActionPrompt(text) {
@@ -207,9 +230,37 @@ export class UIManager {
   }
 
   updateContextPrompts(player) {
-    if (player.isDriving) {
-      this.setActionPrompt("[E] Exit Vehicle &nbsp;|&nbsp; [H] Horn &nbsp;|&nbsp; [R] Radio");
+    if (this.game.drone?.isActive) {
+      const drone = this.game.drone;
+      this.setActionPrompt(`🛸 SKYEYE DRONE &nbsp;|&nbsp; BATTERY: ${Math.round(drone.battery)}% &nbsp;|&nbsp; SIGNAL: ${drone.signalStrength}% &nbsp;|&nbsp; ALT: ${Math.round(drone.position.y)}M &nbsp;|&nbsp; [Left Click] EMP Dart &nbsp;|&nbsp; [U] Recall`);
       return;
+    }
+
+    if (player.isDriving) {
+      if (player.currentVehicle?.type === 'helicopter') {
+        this.setActionPrompt("[E] Exit Helicopter &nbsp;|&nbsp; [Space/Shift] Altitude Climb &nbsp;|&nbsp; [WASD] Pitch & Rudder");
+      } else {
+        this.setActionPrompt("[E] Exit Vehicle &nbsp;|&nbsp; [H] Horn &nbsp;|&nbsp; [R] Radio");
+      }
+      return;
+    }
+
+    // Check near helicopter
+    if (this.game.helicopter && !this.game.helicopter.isDestroyed) {
+      if (player.position.distanceTo(this.game.helicopter.position) < 5.0) {
+        this.setActionPrompt("[E] Board Sky-Ranger Helicopter");
+        return;
+      }
+    }
+
+    // Check near elevator pads
+    const elevatorPads = this.game.cityMap?.elevatorPads || [];
+    for (let i = 0; i < elevatorPads.length; i++) {
+      const pad = elevatorPads[i];
+      if (player.position.distanceTo(pad.position) < 2.5) {
+        this.setActionPrompt(`[E] Take ${pad.userData.label}`);
+        return;
+      }
     }
 
     // Check near interactive stall

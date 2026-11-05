@@ -327,4 +327,172 @@ export class CityProps {
     this.scene.add(group);
     return group;
   }
+
+  // --- FUTURISTIC BKC & DOCKLANDS PROPS ---
+
+  // Rooftop Helipad with Lighting & Markings
+  createHelipad(x, y, z, radius = 9.0) {
+    const group = new THREE.Group();
+    group.position.set(x, y, z);
+
+    const padMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.8 });
+    const lineMat = new THREE.MeshBasicMaterial({ color: 0xfacc15 });
+    const greenLightMat = new THREE.MeshBasicMaterial({ color: 0x22c55e });
+
+    // Octagonal / Round Base Platform
+    const padGeo = new THREE.CylinderGeometry(radius, radius + 0.5, 0.4, 16);
+    const pad = new THREE.Mesh(padGeo, padMat);
+    pad.position.y = 0.2;
+    group.add(pad);
+
+    // Yellow Painted Ring
+    const ringGeo = new THREE.RingGeometry(radius * 0.7, radius * 0.78, 24);
+    ringGeo.rotateX(-Math.PI / 2);
+    const ring = new THREE.Mesh(ringGeo, lineMat);
+    ring.position.y = 0.42;
+    group.add(ring);
+
+    // Giant Painted 'H' Mark
+    const hBarGeo = new THREE.PlaneGeometry(1.2, 5.0);
+    hBarGeo.rotateX(-Math.PI / 2);
+    const hL = new THREE.Mesh(hBarGeo, lineMat);
+    hL.position.set(-1.6, 0.43, 0);
+    const hR = new THREE.Mesh(hBarGeo, lineMat);
+    hR.position.set(1.6, 0.43, 0);
+    const hCross = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 1.2).rotateX(-Math.PI / 2), lineMat);
+    hCross.position.set(0, 0.43, 0);
+    group.add(hL, hR, hCross);
+
+    // Perimeter Green LED Strobe Lights
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * Math.PI * 2;
+      const lx = Math.cos(angle) * (radius - 0.4);
+      const lz = Math.sin(angle) * (radius - 0.4);
+      const lightMesh = new THREE.Mesh(new THREE.SphereGeometry(0.18, 8, 8), greenLightMat);
+      lightMesh.position.set(lx, 0.5, lz);
+      group.add(lightMesh);
+    }
+
+    this.scene.add(group);
+
+    // Add solid collision platform
+    const padBox = new THREE.Box3(
+      new THREE.Vector3(x - radius, y, z - radius),
+      new THREE.Vector3(x + radius, y + 0.6, z + radius)
+    );
+    this.physics.addRamp(padBox, 'y', y + 0.4);
+
+    return group;
+  }
+
+  // Holographic Cyber Teleport / Elevator Pad
+  createElevatorWarpPad(x, y, z, destX, destY, destZ, label = "Rooftop Elevator") {
+    const group = new THREE.Group();
+    group.position.set(x, y, z);
+    group.userData = { isElevator: true, target: new THREE.Vector3(destX, destY, destZ), label };
+
+    const ringMat = new THREE.MeshBasicMaterial({ color: 0x06b6d4, wireframe: true });
+    const pad = new THREE.Mesh(new THREE.CylinderGeometry(1.8, 2.0, 0.2, 16), ringMat);
+    pad.position.y = 0.1;
+
+    // Glowing column
+    const glow = new THREE.Mesh(
+      new THREE.CylinderGeometry(1.4, 1.4, 2.8, 12, 1, true),
+      new THREE.MeshBasicMaterial({ color: 0x06b6d4, transparent: true, opacity: 0.25, side: THREE.DoubleSide })
+    );
+    glow.position.y = 1.4;
+
+    group.add(pad, glow);
+    this.scene.add(group);
+
+    return group;
+  }
+
+  // Holographic Cyber Signboard
+  createCyberSign(x, y, z, text = "ASTRACORP", colorHex = 0x00f3ff, width = 14, height = 4.5) {
+    const group = new THREE.Group();
+    group.position.set(x, y, z);
+
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 160;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#050b14';
+    ctx.fillRect(0, 0, 512, 160);
+
+    // Cyber border
+    ctx.strokeStyle = `#${colorHex.toString(16).padStart(6, '0')}`;
+    ctx.lineWidth = 6;
+    ctx.strokeRect(8, 8, 496, 144);
+
+    ctx.font = 'bold 54px Montserrat, Rajdhani, sans-serif';
+    ctx.fillStyle = ctx.strokeStyle;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, 256, 80);
+
+    const tex = new THREE.CanvasTexture(canvas);
+    const signMat = new THREE.MeshBasicMaterial({ map: tex, transparent: true });
+
+    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(width, height), signMat);
+    group.add(mesh);
+
+    this.scene.add(group);
+    return group;
+  }
+
+  // Shipping Freight Container (for Colaba Docks)
+  createShippingContainer(x, y, z, colorHex = 0xdc2626, rotY = 0) {
+    const group = new THREE.Group();
+    group.position.set(x, y, z);
+    group.rotation.y = rotY;
+
+    const contMat = new THREE.MeshStandardMaterial({ color: colorHex, metalness: 0.5, roughness: 0.6 });
+    const cont = new THREE.Mesh(new THREE.BoxGeometry(3.0, 3.0, 7.5), contMat);
+    cont.position.y = 1.5;
+    cont.castShadow = true;
+    group.add(cont);
+
+    this.scene.add(group);
+    this.physics.addStaticBox(new THREE.Box3().setFromObject(cont));
+    return group;
+  }
+
+  // Cargo Crane for Maritime Docks
+  createCargoCrane(x, z) {
+    const group = new THREE.Group();
+    group.position.set(x, 0, z);
+
+    const steelMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.7, roughness: 0.3 }); // Safety Yellow
+
+    // 4 Truss Legs
+    const legGeo = new THREE.BoxGeometry(0.6, 22, 0.6);
+    const l1 = new THREE.Mesh(legGeo, steelMat);
+    l1.position.set(-3.5, 11, -3.5);
+    const l2 = new THREE.Mesh(legGeo, steelMat);
+    l2.position.set(3.5, 11, -3.5);
+    const l3 = new THREE.Mesh(legGeo, steelMat);
+    l3.position.set(-3.5, 11, 3.5);
+    const l4 = new THREE.Mesh(legGeo, steelMat);
+    l4.position.set(3.5, 11, 3.5);
+    group.add(l1, l2, l3, l4);
+
+    // Top Boom Arm
+    const boomGeo = new THREE.BoxGeometry(2.0, 2.0, 28);
+    const boom = new THREE.Mesh(boomGeo, steelMat);
+    boom.position.set(0, 23, 6);
+    group.add(boom);
+
+    // Operator Cabin
+    const cabin = new THREE.Mesh(new THREE.BoxGeometry(3.0, 3.0, 3.0), steelMat);
+    cabin.position.set(0, 22, -2);
+    group.add(cabin);
+
+    this.scene.add(group);
+    this.physics.addStaticBox(new THREE.Box3().setFromObject(l1));
+    this.physics.addStaticBox(new THREE.Box3().setFromObject(l2));
+    this.physics.addStaticBox(new THREE.Box3().setFromObject(l3));
+    this.physics.addStaticBox(new THREE.Box3().setFromObject(l4));
+    return group;
+  }
 }

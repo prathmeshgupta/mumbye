@@ -1,5 +1,6 @@
 // MUMBYE: MAXIMUM CITY - Web Audio Procedural Synthesizer
-// Zero external asset dependencies; all authentic sounds synthesized via Web Audio API.
+// LICENSE & ATTRIBUTION: 100% Original Algorithmic Web Audio Synthesis (CC0 / Public Domain).
+// Zero external asset dependencies, zero sample copyrights, zero liability.
 
 export class AudioEngine {
   constructor() {
@@ -8,22 +9,26 @@ export class AudioEngine {
     this.sfxGain = null;
     this.musicGain = null;
     this.engineGain = null;
+    this.flightGain = null;
     this.initialized = false;
     this.isMuted = false;
 
-    // Active engine sound nodes
+    // Active engine & flight sound nodes
     this.currentEngineNode = null;
     this.currentEngineOsc = null;
     this.currentSirenOsc = null;
+    this.currentDroneNode = null;
+    this.currentHeliNode = null;
 
-    // Radio
-    this.currentRadioStation = 0; // 0 = Off, 1 = Bollywood Funk, 2 = Gully Rap, 3 = Sunset Synthwave, 4 = Dhol Tasha
+    // Radio Stations (100% Procedurally Synthesized Live Beats)
+    this.currentRadioStation = 0; // 0 = Off, 1 = Bollywood Funk, 2 = Gully Rap, 3 = Sunset Synthwave, 4 = Dhol Tasha, 5 = Cyber BKC
     this.radioStations = [
       { id: 0, name: "Radio OFF", genre: "Mute" },
       { id: 1, name: "Bombay Disco 98.3", genre: "Bollywood Funk & Disco" },
       { id: 2, name: "Gully Beat 104.8", genre: "Mumbai Desi Hip Hop" },
       { id: 3, name: "Marine Drive Chill 92.7", genre: "Arabian Sea Chillwave" },
-      { id: 4, name: "Dhol Tasha 101.2", genre: "Festival Beats & Energy" }
+      { id: 4, name: "Dhol Tasha 101.2", genre: "Festival Beats & Energy" },
+      { id: 5, name: "Cyber BKC 107.5", genre: "Futuristic Synthwave & EDM" }
     ];
     this.radioInterval = null;
     this.radioStep = 0;
@@ -50,6 +55,10 @@ export class AudioEngine {
       this.engineGain = this.ctx.createGain();
       this.engineGain.gain.setValueAtTime(0.35, this.ctx.currentTime);
       this.engineGain.connect(this.masterGain);
+
+      this.flightGain = this.ctx.createGain();
+      this.flightGain.gain.setValueAtTime(0.35, this.ctx.currentTime);
+      this.flightGain.connect(this.masterGain);
 
       this.initialized = true;
     } catch (e) {
@@ -494,7 +503,7 @@ export class AudioEngine {
     if (stationIndex === 0 || !this.initialized) return;
 
     this.radioStep = 0;
-    const bpm = stationIndex === 4 ? 135 : stationIndex === 2 ? 95 : stationIndex === 1 ? 120 : 105;
+    const bpm = stationIndex === 5 ? 128 : stationIndex === 4 ? 135 : stationIndex === 2 ? 95 : stationIndex === 1 ? 120 : 105;
     const intervalMs = (60 / bpm) * 1000 / 4; // 16th notes
 
     this.radioInterval = setInterval(() => {
@@ -561,6 +570,25 @@ export class AudioEngine {
       if (step % 2 === 1 || step % 8 === 7) this.playRadioSnare(now, 0.28);
       // Metallic manjira cymbals
       if (step % 2 === 0) this.playRadioHat(now, 0.2, true);
+    }
+    // Station 5: Cyber BKC 107.5 (Futuristic Synthwave & EDM)
+    else if (station === 5) {
+      // Hard four-on-the-floor electro kick
+      if (step % 4 === 0) this.playRadioKick(now, 140, 0.42);
+      // Cyber snare + noise tail on 4 and 12
+      if (step % 8 === 4) this.playRadioSnare(now, 0.32);
+      // Fast rolling 16th hats
+      this.playRadioHat(now, step % 2 === 0 ? 0.08 : 0.15);
+      // Cyberpunk rolling 16th synth bass arpeggio
+      const cyberScale = [65.41, 77.78, 87.31, 98.00, 116.54, 130.81, 155.56, 174.61]; // C minor pentatonic
+      const noteFreq = cyberScale[step % cyberScale.length];
+      this.playRadioBass(now, noteFreq, 0.1, 'sawtooth');
+      // Lead melodic stab every 8 steps
+      if (step % 8 === 0) {
+        const leadScale = [523.25, 622.25, 698.46, 783.99];
+        const lFreq = leadScale[(step / 8) % leadScale.length];
+        this.playRadioLead(now, lFreq, 0.25, 'sawtooth');
+      }
     }
   }
 
@@ -652,5 +680,174 @@ export class AudioEngine {
     gain.connect(targetGain || this.sfxGain);
 
     noise.start();
+  }
+
+  // --- Aerial Flight & High-Tech Sound Synthesizers ---
+
+  // Quadcopter Drone Sound Engine
+  startDroneSound() {
+    if (!this.initialized || this.isMuted || this.currentDroneNode) return;
+    const now = this.ctx.currentTime;
+
+    const osc = this.ctx.createOscillator();
+    const filter = this.ctx.createBiquadFilter();
+    const gain = this.ctx.createGain();
+
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(175, now);
+
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(520, now);
+    filter.Q.setValueAtTime(2.5, now);
+
+    gain.gain.setValueAtTime(0.01, now);
+    gain.gain.linearRampToValueAtTime(0.18, now + 0.2);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.flightGain || this.sfxGain);
+    osc.start(now);
+
+    this.currentDroneNode = { osc, filter, gain };
+  }
+
+  updateDroneSound(throttle = 0, speedNormalized = 0) {
+    if (!this.currentDroneNode || !this.ctx) return;
+    const now = this.ctx.currentTime;
+    const targetFreq = 175 + throttle * 120 + speedNormalized * 80;
+    const targetFilter = 500 + throttle * 400;
+    const targetGain = 0.16 + throttle * 0.12;
+
+    this.currentDroneNode.osc.frequency.setTargetAtTime(targetFreq, now, 0.06);
+    this.currentDroneNode.filter.frequency.setTargetAtTime(targetFilter, now, 0.06);
+    this.currentDroneNode.gain.gain.setTargetAtTime(targetGain, now, 0.05);
+  }
+
+  stopDroneSound() {
+    if (this.currentDroneNode) {
+      try {
+        const now = this.ctx.currentTime;
+        this.currentDroneNode.gain.gain.linearRampToValueAtTime(0.001, now + 0.15);
+        this.currentDroneNode.osc.stop(now + 0.15);
+      } catch (e) {}
+      this.currentDroneNode = null;
+    }
+  }
+
+  // Sky-Ranger Helicopter Sound Engine (Rotor Blade Chop + Jet Turbine)
+  startHelicopterSound() {
+    if (!this.initialized || this.isMuted || this.currentHeliNode) return;
+    const now = this.ctx.currentTime;
+
+    // Turbine whine
+    const turbine = this.ctx.createOscillator();
+    turbine.type = 'sawtooth';
+    turbine.frequency.setValueAtTime(320, now);
+
+    const turbineFilter = this.ctx.createBiquadFilter();
+    turbineFilter.type = 'lowpass';
+    turbineFilter.frequency.setValueAtTime(900, now);
+
+    const turbineGain = this.ctx.createGain();
+    turbineGain.gain.setValueAtTime(0.08, now);
+
+    turbine.connect(turbineFilter);
+    turbineFilter.connect(turbineGain);
+    turbineGain.connect(this.flightGain || this.sfxGain);
+    turbine.start(now);
+
+    // Rotor Chop Oscillator
+    const rotor = this.ctx.createOscillator();
+    rotor.type = 'triangle';
+    rotor.frequency.setValueAtTime(38, now);
+
+    const rotorFilter = this.ctx.createBiquadFilter();
+    rotorFilter.type = 'lowpass';
+    rotorFilter.frequency.setValueAtTime(180, now);
+
+    const rotorGain = this.ctx.createGain();
+    rotorGain.gain.setValueAtTime(0.3, now);
+
+    rotor.connect(rotorFilter);
+    rotorFilter.connect(rotorGain);
+    rotorGain.connect(this.flightGain || this.sfxGain);
+    rotor.start(now);
+
+    this.currentHeliNode = { turbine, turbineGain, rotor, rotorGain };
+  }
+
+  updateHelicopterSound(rpmNormalized = 1.0, altitudeClimb = 0) {
+    if (!this.currentHeliNode || !this.ctx) return;
+    const now = this.ctx.currentTime;
+
+    const rotorFreq = 36 + rpmNormalized * 18 + (altitudeClimb > 0 ? 8 : 0);
+    const turbineFreq = 300 + rpmNormalized * 150;
+
+    this.currentHeliNode.rotor.frequency.setTargetAtTime(rotorFreq, now, 0.08);
+    this.currentHeliNode.turbine.frequency.setTargetAtTime(turbineFreq, now, 0.08);
+  }
+
+  stopHelicopterSound() {
+    if (this.currentHeliNode) {
+      try {
+        const now = this.ctx.currentTime;
+        this.currentHeliNode.rotorGain.gain.linearRampToValueAtTime(0.001, now + 0.2);
+        this.currentHeliNode.turbineGain.gain.linearRampToValueAtTime(0.001, now + 0.2);
+        this.currentHeliNode.rotor.stop(now + 0.2);
+        this.currentHeliNode.turbine.stop(now + 0.2);
+      } catch (e) {}
+      this.currentHeliNode = null;
+    }
+  }
+
+  // EMP Taser Shockwave
+  playEMPZap() {
+    if (!this.initialized || this.isMuted) return;
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const filter = this.ctx.createBiquadFilter();
+    const gain = this.ctx.createGain();
+
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(880, now);
+    osc.frequency.exponentialRampToValueAtTime(60, now + 0.25);
+
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(1400, now);
+    filter.frequency.exponentialRampToValueAtTime(200, now + 0.25);
+
+    gain.gain.setValueAtTime(0.4, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.sfxGain);
+
+    osc.start(now);
+    osc.stop(now + 0.25);
+
+    // Crackle noise burst
+    this.playNoise(0.2, 0.25, 3000, 'highpass');
+  }
+
+  // High-Tech Scanner Ping
+  playScannerBeep() {
+    if (!this.initialized || this.isMuted) return;
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(1200, now);
+    osc.frequency.setValueAtTime(1800, now + 0.06);
+
+    gain.gain.setValueAtTime(0.18, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+
+    osc.connect(gain);
+    gain.connect(this.sfxGain);
+
+    osc.start(now);
+    osc.stop(now + 0.16);
   }
 }

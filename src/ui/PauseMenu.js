@@ -169,11 +169,13 @@ export class PauseMenu {
             <h3>📍 MUMBAI DISTRICTS</h3>
             <ul>
               <li><span class="dot dot-blue"></span> <b>Marine Drive:</b> Seaside Queen's Necklace promenade</li>
+              <li><span class="dot dot-cyan"></span> <b>BKC Cyber City:</b> Neon skyscrapers, skybridges & Helipad</li>
               <li><span class="dot dot-gold"></span> <b>Gateway of India:</b> Historic stone arch & plaza</li>
-              <li><span class="dot dot-orange"></span> <b>Bhendi Bazaar & Chawls:</b> Dense alleys & street markets</li>
+              <li><span class="dot dot-orange"></span> <b>Bhendi & Chor Bazaar:</b> Dense alleys, markets & chop-shops</li>
               <li><span class="dot dot-cyan"></span> <b>Bandra-Worli Sea Link:</b> 4-lane cable suspension bridge</li>
-              <li><span class="dot dot-red"></span> <b>CST Railway Station:</b> Suburban train platforms</li>
+              <li><span class="dot dot-red"></span> <b>CST Railway Corridor:</b> Moving suburban local trains</li>
               <li><span class="dot dot-green"></span> <b>Metro General Hospital:</b> Emergency medical facility</li>
+              <li><span class="dot dot-gold"></span> <b>Colaba Freight Docks:</b> Shipping containers & maritime cranes</li>
               <li><span class="dot dot-vada"></span> <b>Vada Pav Tapris:</b> Steaming food stalls (Restore 100 HP)</li>
             </ul>
             <div class="map-hint">💡 Blinking white arrow represents Kabir's current position and heading.</div>
@@ -257,6 +259,7 @@ export class PauseMenu {
                 <option value="2" ${currentStation === 2 ? 'selected' : ''}>Gully Beat 104.8 (Mumbai Hip Hop)</option>
                 <option value="3" ${currentStation === 3 ? 'selected' : ''}>Marine Drive Chill 92.7 (Chillwave)</option>
                 <option value="4" ${currentStation === 4 ? 'selected' : ''}>Dhol Tasha 101.2 (Ganpati Energy)</option>
+                <option value="5" ${currentStation === 5 ? 'selected' : ''}>Cyber BKC 107.5 (Futuristic Synthwave)</option>
               </select>
             </div>
             <div class="s-hint">
@@ -375,7 +378,7 @@ export class PauseMenu {
     ctx.lineCap = 'round';
 
     // Vertical Avenues
-    [-50, 20, 90, 160].forEach(rx => {
+    [-50, 20, 90, 160, 240].forEach(rx => {
       ctx.beginPath();
       ctx.moveTo(toScreenX(rx), toScreenY(-180));
       ctx.lineTo(toScreenX(rx), toScreenY(180));
@@ -383,10 +386,10 @@ export class PauseMenu {
     });
 
     // Horizontal Streets
-    [-120, -60, 0, 60, 120].forEach(rz => {
+    [-180, -120, -60, 0, 60, 120].forEach(rz => {
       ctx.beginPath();
       ctx.moveTo(toScreenX(-50), toScreenY(rz));
-      ctx.lineTo(toScreenX(160), toScreenY(rz));
+      ctx.lineTo(toScreenX(300), toScreenY(rz));
       ctx.stroke();
     });
 
@@ -412,7 +415,10 @@ export class PauseMenu {
     const landmarks = [
       { name: "🌊 Marine Drive", x: -50, z: 0, color: "#38bdf8" },
       { name: "🏛️ Gateway Plaza", x: -20, z: 150, color: "#facc15" },
-      { name: "🏙️ Bhendi Bazaar", x: 90, z: 0, color: "#fb923c" },
+      { name: "🏙️ Chor Bazaar", x: 90, z: 0, color: "#fb923c" },
+      { name: "🛸 BKC Cyber Hub", x: 240, z: -80, color: "#06b6d4" },
+      { name: "🚁 AstraCorp Helipad", x: 240, z: -60, color: "#a855f7" },
+      { name: "⚓ Colaba Docks", x: 240, z: 120, color: "#f59e0b" },
       { name: "🌉 Sea Link", x: -50, z: -240, color: "#38bdf8" },
       { name: "🚆 CST Station", x: 40, z: 30, color: "#f87171" },
       { name: "🏥 Metro Hospital", x: 20, z: -30, color: "#4ade80" },

@@ -94,7 +94,7 @@ export class Player {
     this.equipWeapon(next);
   }
 
-  update(delta, input, vehicles = [], interactiveStalls = []) {
+  update(delta, input, vehicles = [], interactiveStalls = [], elevatorPads = []) {
     if (this.isDead) return;
 
     if (this.attackCooldown > 0) this.attackCooldown -= delta;
@@ -108,8 +108,26 @@ export class Player {
     this.handleMovement(delta, input);
     this.handleVehicleInteraction(input, vehicles);
     this.handleStallInteraction(input, interactiveStalls);
+    this.handleElevatorInteraction(input, elevatorPads);
     this.handleCombat(delta, input);
     this.animateJoints(delta, input);
+  }
+
+  handleElevatorInteraction(input, elevatorPads = []) {
+    if (!input.wasJustPressed('KeyE')) return;
+    for (let i = 0; i < elevatorPads.length; i++) {
+      const pad = elevatorPads[i];
+      if (this.position.distanceTo(pad.position) < 2.8) {
+        const dest = pad.userData.target;
+        this.position.copy(dest);
+        this.velocity.set(0, 0, 0);
+        this.audioEngine?.playScannerBeep();
+        window.dispatchEvent(new CustomEvent('mumbye_dialog_message', {
+          detail: { speaker: "AstraCorp High-Speed Lift", text: `Transported to ${pad.userData.label}.` }
+        }));
+        return;
+      }
+    }
   }
 
   handleMovement(delta, input) {
@@ -300,15 +318,19 @@ export class Player {
     this.currentVehicle = vehicle;
     vehicle.isPlayerDriving = true;
 
-    // Hide on-foot player mesh while inside car
+    // Hide on-foot player mesh while inside car or helicopter
     this.mesh.visible = false;
 
-    // Start vehicle engine sound
-    this.audioEngine?.startVehicleEngine(vehicle.type);
-
-    // Switch camera to vehicle mode
-    this.cameraManager.setTargetVehicle(vehicle);
-    this.cameraManager.setMode('in_vehicle');
+    if (vehicle.type === 'helicopter') {
+      vehicle.enter();
+      this.cameraManager.setTargetHelicopter(vehicle);
+      this.cameraManager.setMode('helicopter');
+    } else {
+      // Start ground vehicle engine sound
+      this.audioEngine?.startVehicleEngine(vehicle.type);
+      this.cameraManager.setTargetVehicle(vehicle);
+      this.cameraManager.setMode('in_vehicle');
+    }
 
     window.dispatchEvent(new CustomEvent('mumbye_entered_vehicle', { detail: { vehicle } }));
   }
@@ -319,14 +341,18 @@ export class Player {
     const v = this.currentVehicle;
     v.isPlayerDriving = false;
 
-    // Position player just outside vehicle driver door
-    const exitOffset = new THREE.Vector3(v.width * 0.7 + 0.8, 0, 0)
-      .applyAxisAngle(new THREE.Vector3(0, 1, 0), v.rotation.y);
-    this.mesh.position.copy(v.position).add(exitOffset);
-    this.mesh.position.y = this.physics.getGroundHeight(this.mesh.position.x, this.mesh.position.z);
-    this.mesh.visible = true;
+    if (v.type === 'helicopter') {
+      v.exit();
+      this.mesh.position.set(v.position.x + 2.5, v.position.y, v.position.z);
+    } else {
+      // Position player just outside vehicle driver door
+      const exitOffset = new THREE.Vector3(v.width * 0.7 + 0.8, 0, 0)
+        .applyAxisAngle(new THREE.Vector3(0, 1, 0), v.rotation.y);
+      this.mesh.position.copy(v.position).add(exitOffset);
+      this.audioEngine?.stopVehicleEngine();
+    }
 
-    this.audioEngine?.stopVehicleEngine();
+    this.mesh.visible = true;
     this.cameraManager.setMode('on_foot');
 
     this.isDriving = false;

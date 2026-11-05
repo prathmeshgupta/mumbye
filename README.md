@@ -14,28 +14,42 @@
 
 Everything is finished end-to-end:
 * **Authentic Mumbai Atmosphere**: Auto Rickshaws with 2-stroke engine sputter, Kaali-Peeli vintage Premier Padmini taxis, red BEST buses, animated Mumbai suburban local trains with horns, tetrapods lining Marine Drive, and steaming Vada Pav / Cutting Chai tapris.
-* **Open World Map**:
-  * **Marine Drive (Queen's Necklace)**: Seaside boulevard along the Arabian Sea with tetrapods, Art Deco apartments, and Bollywood billboards.
+* **Open World Map & Neighborhood Granularity**:
+  * **BKC Cyber City (Futuristic Hub)**: Gleaming illuminated skyscrapers (*AstraCorp HQ*, *Quantum Neural*, *Vexen AI*), elevated skybridges, neon data lines, and rooftop Helipad with high-speed elevator warp.
+  * **Colaba Harbor & Maritime Docks**: Shipping freight container stacks, industrial cargo cranes, and dockside tapris.
+  * **Marine Drive (Queen's Necklace)**: Seaside boulevard along the Arabian Sea with palm trees, tetrapods, Art Deco apartments, and Bollywood billboards.
   * **Gateway of India & Fort Plaza**: Grand heritage stone arch monument facing the ocean harbor.
-  * **Bhendi Bazaar & Chawls**: Vibrant, dense multi-story chawls with laundry lines, narrow alleys, and bustling market stalls.
-  * **Bandra-Worli Sea Link**: Majestic cable-stayed suspension bridge spanning the open ocean.
-  * **Central Railway Corridor**: Realistic railway tracks with overhead catenary wires and moving Mumbai Local Train.
+  * **Chor Bazaar & Chawls**: Vibrant, dense multi-story chawls with laundry lines, narrow alleys, chop-shops, and bustling market stalls.
+  * **Bandra-Worli Sea Link**: Majestic cable-stayed suspension bridge spanning the open ocean with stunt ramps.
+  * **Central Railway Corridor**: Realistic railway tracks with overhead catenary wires, suburban platforms, and moving Mumbai Local Train.
+* **Aerial Flight & Flying Vehicles**:
+  * **SkyEye Surveillance & Combat Drone**: Deployable on foot via **`U`** or the phone app. 6-DOF aerodynamic flight, altitude ceiling, solar battery, camera tracking, and fireable **EMP Taser Dart** that disables hostile vehicles and guards.
+  * **Sky-Ranger VTOL Helicopter**: Flyable twin-rotor helicopter located at the AstraCorp Rooftop Helipad. Full collective altitude climb/descent, bank/tilt, downwash ground smoke, and aerial skyline views.
+  * **High-Speed Lift / Elevator Warp**: Interactive elevator pads connecting AstraCorp street level to the 68m rooftop helipad.
 * **Physics & Arcade Driving**:
   * Drift physics, suspension roll and pitch, handbrake slides, tire burnout smoke, nitro boost, and stunt ramps.
   * Vehicle damage, engine smoke, fire, and explosions.
 * **Metro Patrol Enforcement System**:
   * 1 to 5 Wanted Stars with authentic enforcer radio chatter (*"Target spotted! Surround the suspect!"*).
   * Lathi-wielding guards on foot, high-speed Metro Patrol Cruisers, tactical roadblocks, and sirens.
-* **Pure Web Audio Synthesis Engine**:
-  * Zero external sound asset dependencies (no 404s or broken links).
-  * Procedurally synthesized vehicle engines (2-stroke rickshaw, taxi carbureted engine, bus diesel rumble, screaming supercar V8).
-  * 4 Live Mumbai Radio Stations:
+* **Pure Web Audio Synthesis Engine (CC0 / Zero-Liability Guarantee)**:
+  * 100% original algorithmic synthesis via Web Audio API. Zero external audio downloads, zero copyrighted MP3s/samples, zero trademark liabilities.
+  * Procedurally synthesized vehicle engines (2-stroke rickshaw, taxi carbureted engine, bus diesel rumble, screaming supercar V8, drone quad-rotor whirr, helicopter blade chop).
+  * 5 Live Mumbai Radio Stations:
     1. *Bombay Disco 98.3* (Bollywood Funk & Disco)
     2. *Gully Beat 104.8* (Mumbai Desi Hip Hop)
     3. *Marine Drive Chill 92.7* (Arabian Sea Chillwave)
     4. *Dhol Tasha 101.2* (Ganpati Festival High-Energy Beats)
-* **Bambaiya Smartphone**:
-  * Press **`P`** to access Contacts (call fixer Babu Bhaiyya, order Taxis, post legal bail bond to clear heat), Cheats App, Radio, and DLC Store.
+    5. *Cyber BKC 107.5* (Futuristic Synthwave & Cyberpunk EDM)
+* **Bambaiya Smartphone Apps**:
+  * Press **`P`** to access Contacts (call fixer Babu Bhaiyya, order Taxis, post legal bail bond to clear heat).
+  * **SkyEye Drone App**: One-tap drone deployment.
+  * **Bounties Board App**: Radiant dynamic mini-missions across neighborhoods.
+  * **Bazaar Stocks App**: Fictitious Mumbai stock market ticker with instant investments.
+  * **Cheats App, Radio Tuner, and DLC Store**.
+* **Story Campaign & Radiant Mini-Bounties**:
+  * 7-Mission cinematic story campaign connecting Dadar, Marine Drive, Bhendi Bazaar, BKC Cyber City, and the Sea Link.
+  * Repeatable dynamic mini-missions (Dabbawala Express, Chor Bazaar Drone Taser, BKC Rooftop Data Transport).
 * **Pause Menu, Full Map & Settings (`ESC`)**:
   * Interactive full city map with district legend and live player GPS tracker.
   * Graphics settings: Dynamic shadows toggle, render resolution scale, live FPS counter.
@@ -164,13 +178,15 @@ c:\Users\pratj\Mumbye\
 │   ├── entities/
 │   │   ├── Player.js            # Kabir player controller, weapons, health
 │   │   ├── Vehicle.js           # Arcade physics, drifting, damage, sirens
+│   │   ├── Drone.js             # SkyEye 6-DOF Drone & EMP Taser Dart
+│   │   ├── Helicopter.js        # Sky-Ranger VTOL Helicopter flight mechanics
 │   │   ├── TrafficManager.js    # Mumbai ambient traffic AI
 │   │   ├── PedestrianManager.js # Pedestrian AI & dropped cash
 │   │   ├── PoliceSystem.js      # 5-Star Wanted Level & Metro Patrol Enforcement AI
 │   │   └── TrainSystem.js       # Moving Mumbai Local Train with horn
 │   ├── missions/
-│   │   ├── MissionManager.js    # Mission state, checkpoints, taxi hustle
-│   │   └── MissionsData.js      # Story missions 1 through 5
+│   │   ├── MissionManager.js    # Mission state, checkpoints, taxi hustle, bounties
+│   │   └── MissionsData.js      # Story missions 1-7 & radiant mini-contracts
 │   ├── dlc/
 │   │   ├── DLCManager.js        # Core modding framework & runtime injector
 │   │   └── bundled/
@@ -181,7 +197,7 @@ c:\Users\pratj\Mumbye\
 │       ├── UIManager.js         # Master HUD controller
 │       ├── Minimap.js           # Circular GPS radar with rotating arrow
 │       ├── PauseMenu.js         # Interactive Map, Graphics, Audio & Settings
-│       ├── PhoneUI.js           # Bambaiya smartphone with apps & cheats
+│       ├── PhoneUI.js           # Bambaiya smartphone with Drone, Stocks & Bounties apps
 │       ├── DLCModal.js          # Interactive in-game DLC manager
 │       └── DialogBox.js         # Dialog subtitles & GTA banners
 └── dist/                        # Production build
@@ -197,6 +213,8 @@ c:\Users\pratj\Mumbye\
 | **`SEHAT`** | Restore Full Health & 100 Armor |
 | **`HATHIYAR`** | Unlock All Weapons & Full Ammo |
 | **`POLICEHATAO`** | Clear All Wanted Stars |
+| **`DRONE`** | Instantly Deploy SkyEye Surveillance Drone |
+| **`HELI`** | Warp to AstraCorp Rooftop Helipad |
 | **`SUPERCAR`** | Spawn Bollywood Supercar |
 | **`AUTO`** | Spawn Mumbai Auto Rickshaw |
 | **`TAXI`** | Spawn Kaali-Peeli Taxi |

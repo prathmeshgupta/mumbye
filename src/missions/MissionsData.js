@@ -118,30 +118,117 @@ export const STORY_MISSIONS = [
     successMessage: "MISSION PASSED! Insane stunt jump! You escaped the police manhunt! ₹6,000 awarded."
   },
   {
-    id: 'm5_bollywood_finale',
-    title: "5. The Bollywood Finale",
-    contact: "Aryan Khan (Superstar)",
+    id: 'm5_skyeye_infiltration',
+    title: "5. SkyEye Infiltration at BKC",
+    contact: "Vikram Tech (AstraCorp Whistleblower)",
     introDialog: [
-      { speaker: "Aryan Khan", text: "Bhai! Film City shooting set pe underworld don Don Salim ne humko gher liya hai!" },
-      { speaker: "Kabir", text: "Picture me villain ko hero maarta hai. Asal zindagi me Kabir!" }
+      { speaker: "Vikram Tech", text: "Kabir! AstraCorp is running an illegal AI mass-surveillance grid across Mumbai!" },
+      { speaker: "Kabir", text: "Main tower ke andar ghusna mushkil hai. Security guard aur laser gates hai." },
+      { speaker: "Vikram Tech", text: "Use your SkyEye Drone [U]! Fly up to AstraCorp Tower and zap their server dishes with an EMP Dart!" }
     ],
     checkpoints: [
       {
-        text: "Storm the Gateway Grand Set and eliminate Don Salim's henchmen",
+        text: "Drive to BKC Cyber City Tech Plaza",
+        target: new THREE.Vector3(240, 0, -40),
+        radius: 8.0,
+        type: 'reach'
+      },
+      {
+        text: "Deploy SkyEye Drone [U] and fire EMP Dart at AstraCorp Rooftop Relay",
+        target: new THREE.Vector3(240, 68, -80),
+        radius: 14.0,
+        type: 'reach'
+      }
+    ],
+    rewardCash: 8500,
+    rewardWeapon: 'ak47',
+    successMessage: "MISSION PASSED! Server data extracted! ₹8,500 awarded + Drone capacitor upgraded."
+  },
+  {
+    id: 'm6_helipad_extraction',
+    title: "6. The Rooftop Helipad Extraction",
+    contact: "Babu Bhaiyya",
+    introDialog: [
+      { speaker: "Babu Bhaiyya", text: "Kabir! Metro Security ne pura BKC lock kar diya! Whistleblower ko roof se nikalna padega!" },
+      { speaker: "Kabir", text: "Helicopter chalana aayega mujhe?" },
+      { speaker: "Babu Bhaiyya", text: "AstraCorp ground elevator se chadh, Sky-Ranger Helipad pe ready khada hai! Colaba Docks pe land kar!" }
+    ],
+    checkpoints: [
+      {
+        text: "Step into the AstraCorp Ground Elevator to warp up to the Rooftop Helipad",
+        target: new THREE.Vector3(240, 0, -61),
+        radius: 3.5,
+        type: 'reach'
+      },
+      {
+        text: "Enter the Sky-Ranger Helicopter [E] and fly across Mumbai to Colaba Harbor Docks!",
+        target: new THREE.Vector3(240, 0, 110),
+        radius: 12.0,
+        type: 'reach'
+      }
+    ],
+    rewardCash: 12000,
+    rewardWeapon: 'supercar',
+    successMessage: "MISSION PASSED! Flawless aerial extraction across Mumbai! ₹12,000 awarded."
+  },
+  {
+    id: 'm7_maximum_city_finale',
+    title: "7. Maximum City Overdrive (Finale)",
+    contact: "Aryan Khan (Superstar)",
+    introDialog: [
+      { speaker: "Aryan Khan", text: "Bhai! Film set, underworld aur city enforcement... sab ek sath aa gaye!" },
+      { speaker: "Kabir", text: "Mumbai me entry aasan hoti hai... par exit yaadgar hona chahiye!" },
+      { speaker: "Aryan Khan", text: "Gateway se Bandra-Worli Sea Link tak sprint maar! Pura Mumbai dekh raha hai!" }
+    ],
+    checkpoints: [
+      {
+        text: "Storm the Gateway Grand Plaza and defeat the Syndicate Enforcers!",
         target: new THREE.Vector3(-20, 0, 160),
         radius: 12.0,
         type: 'combat_target',
         targetCount: 6
       },
       {
-        text: "Escort the Superstar to the Getaway Golden Supercar!",
-        target: new THREE.Vector3(-45, 0, 120),
-        radius: 5.0,
-        type: 'reach'
+        text: "Escort the VIP onto the Bandra-Worli Sea Link at maximum velocity!",
+        target: new THREE.Vector3(-50, 4.5, -280),
+        radius: 10.0,
+        type: 'reach',
+        timer: 100
       }
     ],
-    rewardCash: 15000,
+    rewardCash: 25000,
     rewardWeapon: 'gold_eagle',
     successMessage: "CONGRATULATIONS! YOU HAVE CONQUERED MUMBAI! YOU ARE THE DON OF MAXIMUM CITY!"
+  }
+];
+
+// Radiant Dynamic Mini-Missions (Bambaiya Bounty Board)
+export const DYNAMIC_BOUNTIES = [
+  {
+    id: 'bounty_dabba_express',
+    title: "Dabbawala Express Delivery",
+    district: "Central Dadar",
+    payout: 800,
+    description: "Urgent garam lunch box delivery to Marine Drive promenade before 12:30 PM.",
+    target: new THREE.Vector3(-48, 0, -10),
+    timer: 60
+  },
+  {
+    id: 'bounty_drone_taser',
+    title: "Chor Bazaar Drone Surveillance",
+    district: "Chor Bazaar",
+    payout: 1200,
+    description: "Deploy SkyEye Drone [U] and stun the pickpocket running through market alleys.",
+    target: new THREE.Vector3(90, 0, 30),
+    timer: 75
+  },
+  {
+    id: 'bounty_bkc_airdrop',
+    title: "BKC Skybridge Data Transport",
+    district: "BKC Cyber City",
+    payout: 2000,
+    description: "Fly from AstraCorp to Colaba docks with high-priority quantum data drives.",
+    target: new THREE.Vector3(240, 0, 100),
+    timer: 90
   }
 ];

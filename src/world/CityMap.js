@@ -21,6 +21,10 @@ export class CityMap {
     // Procedural Facade Textures
     this.artDecoTexture = this.createFacadeTexture('artdeco');
     this.chawlTexture = this.createFacadeTexture('chawl');
+    this.cyberTexture = this.createFacadeTexture('cyber');
+
+    // Elevator / Teleport pads
+    this.elevatorPads = [];
   }
 
   // Generate Procedural Building Facade Textures with Windows and Lights
@@ -56,6 +60,31 @@ export class CityMap {
           const isLit = (r + c * 3) % 3 === 0 || (r * c) % 5 === 0;
           ctx.fillStyle = isLit ? '#fef08a' : '#1e293b';
           ctx.fillRect(wx, wy, 20, 14);
+        }
+      }
+    } else if (type === 'cyber') {
+      // Futuristic BKC Cyber Facade (Deep midnight blue glass + glowing cyan & magenta strips)
+      ctx.fillStyle = '#050b14';
+      ctx.fillRect(0, 0, 256, 256);
+
+      // Neon vertical data channels
+      ctx.fillStyle = '#06b6d4';
+      ctx.fillRect(0, 0, 8, 256);
+      ctx.fillRect(248, 0, 8, 256);
+      ctx.fillStyle = '#ec4899';
+      ctx.fillRect(124, 0, 6, 256);
+
+      // High-tech office strip windows
+      for (let r = 0; r < 9; r++) {
+        const wy = 12 + r * 26;
+        for (let c = 0; c < 6; c++) {
+          const wx = 18 + c * 38;
+          if (c === 2 || c === 3) continue; // Center conduit gap
+          ctx.fillStyle = (r + c) % 3 === 0 ? '#38bdf8' : '#0f172a';
+          ctx.fillRect(wx, wy, 28, 14);
+          ctx.strokeStyle = '#0284c7';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(wx, wy, 28, 14);
         }
       }
     } else {
@@ -96,6 +125,8 @@ export class CityMap {
     this.buildMarineDriveDistrict();
     this.buildHeritageAndGatewayDistrict();
     this.buildChawlsAndMarketDistrict();
+    this.buildBKCCyberDistrict();
+    this.buildColabaDocklands();
     this.buildBandraWorliSeaLink();
     this.buildRailwayCorridor();
     this.buildPropsAndStalls();
@@ -135,10 +166,10 @@ export class CityMap {
     const sidewalkMat = new THREE.MeshStandardMaterial({ color: 0x949ba6, roughness: 0.9 });
     const groundMat = new THREE.MeshStandardMaterial({ color: 0x333842, roughness: 0.95 });
 
-    // Main City Base Ground
-    const ground = new THREE.Mesh(new THREE.PlaneGeometry(500, 500), groundMat);
+    // Main City Base Ground (Expanded East to BKC & South to Docks)
+    const ground = new THREE.Mesh(new THREE.PlaneGeometry(850, 650), groundMat);
     ground.rotation.x = -Math.PI / 2;
-    ground.position.set(120, -0.05, 0);
+    ground.position.set(160, -0.05, 0);
     ground.receiveShadow = true;
     this.scene.add(ground);
 
@@ -147,13 +178,16 @@ export class CityMap {
       { sx: -50, sz: -180, ex: -50, ez: 180, w: 16, name: "Marine Drive" },
       { sx: 20, sz: -180, ex: 20, ez: 180, w: 14, name: "Dr. D.N. Road" },
       { sx: 90, sz: -180, ex: 90, ez: 180, w: 12, name: "Bhendi Bazaar Road" },
-      { sx: 160, sz: -180, ex: 160, ez: 180, w: 12, name: "Eastern Freeway" },
+      { sx: 160, sz: -180, ex: 160, ez: 180, w: 14, name: "Eastern Freeway" },
+      { sx: 240, sz: -180, ex: 240, ez: 60, w: 16, name: "BKC Tech Boulevard" },
+      { sx: 240, sz: 60, ex: 240, ez: 180, w: 14, name: "Colaba Dock Basin" },
 
-      { sx: -50, sz: -120, ex: 160, ez: -120, w: 12, name: "Bandra Link Approach" },
-      { sx: -50, sz: -60, ex: 160, ez: -60, w: 12, name: "Churchgate Cross" },
-      { sx: -50, sz: 0, ex: 160, ez: 0, w: 14, name: "Veer Nariman Road" },
-      { sx: -50, sz: 60, ex: 160, ez: 60, w: 12, name: "Colaba Causeway" },
-      { sx: -50, sz: 120, ex: 160, ez: 120, w: 12, name: "Gateway Boulevard" }
+      { sx: -50, sz: -120, ex: 300, ez: -120, w: 12, name: "Bandra-BKC Connector" },
+      { sx: -50, sz: -60, ex: 300, ez: -60, w: 12, name: "Churchgate-Skybridge Cross" },
+      { sx: -50, sz: 0, ex: 300, ez: 0, w: 14, name: "Veer Nariman Central Ave" },
+      { sx: -50, sz: 60, ex: 300, ez: 60, w: 12, name: "Colaba Causeway & Docks" },
+      { sx: -50, sz: 120, ex: 300, ez: 120, w: 12, name: "Gateway Boulevard" },
+      { sx: 160, sz: -180, ex: 300, ez: -180, w: 14, name: "BKC Expressway" }
     ];
 
     roads.forEach(r => {
@@ -218,6 +252,8 @@ export class CityMap {
       this.props.createStreetLamp(-50 + 9.5, z);
       this.props.createStreetLamp(20 + 8.5, z);
       this.props.createStreetLamp(90 + 7.5, z);
+      this.props.createStreetLamp(160 + 8.5, z);
+      this.props.createStreetLamp(240 + 9.5, z);
     }
   }
 
@@ -347,6 +383,127 @@ export class CityMap {
         }
       }
     }
+  }
+
+  // District 4: BKC Cyber City (Futuristic High-Tech Hub & Helipad)
+  buildBKCCyberDistrict() {
+    const cyberMat = new THREE.MeshStandardMaterial({
+      map: this.cyberTexture,
+      metalness: 0.85,
+      roughness: 0.2
+    });
+    const glassBridgeMat = new THREE.MeshStandardMaterial({
+      color: 0x06b6d4,
+      transparent: true,
+      opacity: 0.55,
+      roughness: 0.1
+    });
+
+    // 1. AstraCorp Headquarters Skyscraper (with Rooftop Helipad at 68m)
+    const astraHeight = 68;
+    const astraTower = new THREE.Mesh(new THREE.BoxGeometry(34, astraHeight, 34), cyberMat);
+    astraTower.position.set(240, astraHeight / 2, -80);
+    astraTower.receiveShadow = true;
+    this.scene.add(astraTower);
+    this.physics.addStaticBox(new THREE.Box3().setFromObject(astraTower));
+
+    // Rooftop Helipad
+    this.props.createHelipad(240, astraHeight, -80, 9.5);
+
+    // Elevator Warp Pads (Street Ground <-> Rooftop Helipad)
+    const groundElevator = this.props.createElevatorWarpPad(240, 0.05, -61, 240, astraHeight + 0.8, -78, "Elevator to AstraCorp Helipad");
+    const roofElevator = this.props.createElevatorWarpPad(240, astraHeight + 0.1, -65, 240, 0.5, -59, "Elevator to Street Level");
+    this.elevatorPads.push(groundElevator, roofElevator);
+
+    // Neon Corporate Signboard atop AstraCorp
+    this.props.createCyberSign(240, 52, -62.8, "ASTRACORP GLOBAL", 0x06b6d4, 18, 5.0);
+
+    // 2. Quantum Neural Skyscraper
+    const quantumHeight = 56;
+    const quantumTower = new THREE.Mesh(new THREE.BoxGeometry(30, quantumHeight, 30), cyberMat);
+    quantumTower.position.set(240, quantumHeight / 2, -140);
+    quantumTower.receiveShadow = true;
+    this.scene.add(quantumTower);
+    this.physics.addStaticBox(new THREE.Box3().setFromObject(quantumTower));
+
+    this.props.createCyberSign(240, 42, -124.8, "QUANTUM NEURAL", 0xec4899, 16, 4.5);
+
+    // 3. Elevated Glass Skybridge Connecting AstraCorp & Quantum Towers at 36m height
+    const bridgeY = 36.0;
+    const bridgeLength = 30.0;
+    const bridgeGeo = new THREE.BoxGeometry(6.0, 4.0, bridgeLength);
+    const bridgeMesh = new THREE.Mesh(bridgeGeo, glassBridgeMat);
+    bridgeMesh.position.set(240, bridgeY, -110);
+    this.scene.add(bridgeMesh);
+
+    const bridgeBox = new THREE.Box3(
+      new THREE.Vector3(240 - 3.0, bridgeY - 2.0, -110 - bridgeLength / 2),
+      new THREE.Vector3(240 + 3.0, bridgeY + 2.0, -110 + bridgeLength / 2)
+    );
+    this.physics.addRamp(bridgeBox, 'y', bridgeY - 1.5);
+
+    // 4. Vexen Robotics Tower
+    const vexenHeight = 50;
+    const vexenTower = new THREE.Mesh(new THREE.BoxGeometry(26, vexenHeight, 26), cyberMat);
+    vexenTower.position.set(290, vexenHeight / 2, -100);
+    vexenTower.receiveShadow = true;
+    this.scene.add(vexenTower);
+    this.physics.addStaticBox(new THREE.Box3().setFromObject(vexenTower));
+
+    this.props.createCyberSign(290, 38, -86.8, "VEXEN AI GRID", 0x22c55e, 14, 4.0);
+
+    // Cyber Stunt Launch Ramp
+    this.props.createStuntRamp(240, -40, 7.0, 9.0, 4.0, '-z');
+  }
+
+  // District 5: Colaba Harbor & Docks (Maritime Industrial Hub)
+  buildColabaDocklands() {
+    // Stacks of Shipping Cargo Containers
+    const colors = [0xdc2626, 0x2563eb, 0xf59e0b, 0x059669]; // Red, Blue, Yellow, Green
+
+    for (let i = 0; i < 8; i++) {
+      const col = colors[i % colors.length];
+      const cx = 200 + (i % 3) * 12;
+      const cz = 100 + Math.floor(i / 3) * 14;
+      this.props.createShippingContainer(cx, 0, cz, col, (i % 2) * Math.PI / 2);
+      if (i % 2 === 0) {
+        // Stack 2nd container on top
+        this.props.createShippingContainer(cx, 3.0, cz, colors[(i + 1) % colors.length], (i % 2) * Math.PI / 2);
+      }
+    }
+
+    // Heavy Harbor Cargo Cranes
+    this.props.createCargoCrane(285, 90);
+    this.props.createCargoCrane(285, 145);
+
+    // Dockworkers Chai & Vada Pav Tapri
+    this.props.createVadaPavStall(236, 68, 0);
+
+    // Stunt ramp leaping over dock crates
+    this.props.createStuntRamp(215, 85, 6.5, 8.5, 3.6, 'z');
+  }
+
+  // Dynamic Neighborhood / District Geo-Query
+  getNeighborhoodAt(x, z) {
+    if (x > 180 && z <= 50) {
+      return { id: 'bkc', name: 'BKC CYBER CITY', sub: 'High-Tech Financial Hub & Autonomous Grid', color: '#06b6d4' };
+    }
+    if (x > 180 && z > 50) {
+      return { id: 'docks', name: 'COLABA HARBOR & DOCKS', sub: 'Industrial Freight Terminal & Speedboat Basin', color: '#f59e0b' };
+    }
+    if (x <= -20 && z <= -140) {
+      return { id: 'sealink', name: 'BANDRA-WORLI SEA LINK', sub: 'Open Ocean Cable Suspension Bridge', color: '#38bdf8' };
+    }
+    if (x <= 0) {
+      return { id: 'marine', name: 'MARINE DRIVE', sub: "Queen's Necklace Seaside Promenade", color: '#3b82f6' };
+    }
+    if (x <= 70 && z >= 80) {
+      return { id: 'gateway', name: 'GATEWAY OF INDIA & FORT', sub: 'Historic Stone Monuments & Plaza', color: '#eab308' };
+    }
+    if (x > 70 && z >= 0) {
+      return { id: 'bazaar', name: 'CHOR BAZAAR & CHAWLS', sub: 'Dense Alleys, Spice Markets & Chop-Shops', color: '#f97316' };
+    }
+    return { id: 'dadar', name: 'CENTRAL DADAR & CST', sub: 'Suburban Railway Lines & Chawls', color: '#ef4444' };
   }
 
   // District 4: Bandra-Worli Sea Link

@@ -25,10 +25,12 @@ export class CameraManager {
     this.sensitivity = 0.0024;
     this.lerpSpeed = 14.0;
 
-    // Modes: 'on_foot', 'in_vehicle', 'aiming', 'cinematic'
+    // Modes: 'on_foot', 'in_vehicle', 'aiming', 'cinematic', 'drone', 'helicopter'
     this.mode = 'on_foot';
     this.targetVehicle = null;
     this.targetPlayer = null;
+    this.targetDrone = null;
+    this.targetHelicopter = null;
 
     // Cinematic / Stunt cam
     this.cinematicTime = 0;
@@ -49,6 +51,14 @@ export class CameraManager {
 
   setTargetVehicle(vehicle) {
     this.targetVehicle = vehicle;
+  }
+
+  setTargetDrone(drone) {
+    this.targetDrone = drone;
+  }
+
+  setTargetHelicopter(helicopter) {
+    this.targetHelicopter = helicopter;
   }
 
   setMode(mode) {
@@ -78,7 +88,11 @@ export class CameraManager {
       this.shakeIntensity = Math.max(0, this.shakeIntensity - delta * 2.5);
     }
 
-    if (this.mode === 'in_vehicle' && this.targetVehicle) {
+    if (this.mode === 'drone' && this.targetDrone) {
+      this.updateDroneCamera(delta);
+    } else if (this.mode === 'helicopter' && this.targetHelicopter) {
+      this.updateHelicopterCamera(delta);
+    } else if (this.mode === 'in_vehicle' && this.targetVehicle) {
       this.updateVehicleCamera(delta, input);
     } else if (this.mode === 'aiming' && this.targetPlayer) {
       this.updateAimingCamera(delta);
@@ -225,6 +239,60 @@ export class CameraManager {
     this.currentPosition.lerp(_tempDesiredPos, factor);
     this.camera.position.copy(this.currentPosition);
     this.camera.lookAt(this.target);
+  }
+
+  updateDroneCamera(delta) {
+    if (!this.targetDrone) return;
+
+    const dronePos = this.targetDrone.position;
+    this.target.copy(dronePos);
+
+    this.currentFov = THREE.MathUtils.lerp(this.currentFov, 75, delta * 5);
+    this.camera.fov = this.currentFov;
+    this.camera.updateProjectionMatrix();
+
+    const droneDist = 3.6;
+    const droneHeight = 1.4;
+    const cosYaw = Math.cos(this.targetDrone.yaw);
+    const sinYaw = Math.sin(this.targetDrone.yaw);
+
+    _tempDesiredPos.set(
+      dronePos.x - sinYaw * droneDist,
+      dronePos.y + droneHeight,
+      dronePos.z - cosYaw * droneDist
+    );
+
+    const factor = Math.min(1.0, delta * 18.0);
+    this.currentPosition.lerp(_tempDesiredPos, factor);
+    this.camera.position.copy(this.currentPosition);
+    this.camera.lookAt(dronePos.x + sinYaw * 6.0, dronePos.y, dronePos.z + cosYaw * 6.0);
+  }
+
+  updateHelicopterCamera(delta) {
+    if (!this.targetHelicopter) return;
+
+    const heliPos = this.targetHelicopter.position;
+    this.target.copy(heliPos);
+
+    this.currentFov = THREE.MathUtils.lerp(this.currentFov, 72, delta * 5);
+    this.camera.fov = this.currentFov;
+    this.camera.updateProjectionMatrix();
+
+    const heliDist = 14.0;
+    const heliHeight = 5.2;
+    const cosYaw = Math.cos(this.targetHelicopter.yaw);
+    const sinYaw = Math.sin(this.targetHelicopter.yaw);
+
+    _tempDesiredPos.set(
+      heliPos.x - sinYaw * heliDist,
+      heliPos.y + heliHeight,
+      heliPos.z - cosYaw * heliDist
+    );
+
+    const factor = Math.min(1.0, delta * 8.0);
+    this.currentPosition.lerp(_tempDesiredPos, factor);
+    this.camera.position.copy(this.currentPosition);
+    this.camera.lookAt(heliPos.x + sinYaw * 8.0, heliPos.y + 1.2, heliPos.z + cosYaw * 8.0);
   }
 
   updateCinematicCamera(delta) {

@@ -787,4 +787,259 @@ export class ModelFactory {
 
     return group;
   }
+
+  // --- AERIAL & FUTURISTIC VEHICLES ---
+
+  // SkyEye Surveillance & Combat Drone (Quadcopter)
+  createDrone(options = {}) {
+    const group = new THREE.Group();
+    group.name = 'SkyEyeDrone';
+
+    const carbonMat = new THREE.MeshStandardMaterial({ color: 0x18181b, roughness: 0.35, metalness: 0.8 });
+    const cyanNeonMat = new THREE.MeshBasicMaterial({ color: 0x06b6d4 });
+    const redNeonMat = new THREE.MeshBasicMaterial({ color: 0xef4444 });
+    const greenNeonMat = new THREE.MeshBasicMaterial({ color: 0x22c55e });
+    const rotorBladeMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.65, roughness: 0.2 });
+    const lensMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+
+    // Central fuselage pod
+    const bodyGeo = new THREE.BoxGeometry(0.55, 0.2, 0.7);
+    const body = new THREE.Mesh(bodyGeo, carbonMat);
+    body.position.y = 0.25;
+    group.add(body);
+
+    // Glowing Cyber Trim on top of fuselage
+    const trimGeo = new THREE.BoxGeometry(0.25, 0.04, 0.5);
+    const trim = new THREE.Mesh(trimGeo, cyanNeonMat);
+    trim.position.set(0, 0.36, 0);
+    group.add(trim);
+
+    // Camera sensor gimbal (front eye)
+    const gimbal = new THREE.Mesh(new THREE.SphereGeometry(0.12, 12, 12), carbonMat);
+    gimbal.position.set(0, 0.16, 0.36);
+    const lens = new THREE.Mesh(new THREE.CircleGeometry(0.06, 12), lensMat);
+    lens.position.set(0, 0.16, 0.47);
+    group.add(gimbal, lens);
+
+    // 4 Diagonal Motor Arms (X-Frame)
+    const armGeo = new THREE.CylinderGeometry(0.03, 0.03, 0.75, 8);
+    armGeo.rotateZ(Math.PI / 2);
+
+    const arm1 = new THREE.Mesh(armGeo, carbonMat);
+    arm1.position.set(0, 0.25, 0);
+    arm1.rotation.y = Math.PI / 4;
+
+    const arm2 = new THREE.Mesh(armGeo, carbonMat);
+    arm2.position.set(0, 0.25, 0);
+    arm2.rotation.y = -Math.PI / 4;
+    group.add(arm1, arm2);
+
+    // 4 Rotor Assemblies
+    const armLength = 0.48;
+    const motorGeo = new THREE.CylinderGeometry(0.06, 0.06, 0.1, 10);
+    const bladeGeo = new THREE.BoxGeometry(0.55, 0.015, 0.06);
+
+    group.rotors = [];
+
+    const positions = [
+      { x: armLength, z: armLength, led: greenNeonMat },
+      { x: -armLength, z: armLength, led: redNeonMat },
+      { x: armLength, z: -armLength, led: cyanNeonMat },
+      { x: -armLength, z: -armLength, led: cyanNeonMat }
+    ];
+
+    positions.forEach(pos => {
+      const motor = new THREE.Mesh(motorGeo, carbonMat);
+      motor.position.set(pos.x, 0.28, pos.z);
+
+      // LED navigation light beneath motor
+      const led = new THREE.Mesh(new THREE.SphereGeometry(0.035, 8, 8), pos.led);
+      led.position.set(pos.x, 0.22, pos.z);
+      group.add(motor, led);
+
+      // Spinning rotor disc
+      const blade = new THREE.Mesh(bladeGeo, rotorBladeMat);
+      blade.position.set(pos.x, 0.34, pos.z);
+      group.add(blade);
+      group.rotors.push(blade);
+    });
+
+    // Landing Struts
+    const strutGeo = new THREE.BoxGeometry(0.04, 0.18, 0.04);
+    const s1 = new THREE.Mesh(strutGeo, carbonMat);
+    s1.position.set(0.2, 0.09, 0.2);
+    const s2 = new THREE.Mesh(strutGeo, carbonMat);
+    s2.position.set(-0.2, 0.09, 0.2);
+    const s3 = new THREE.Mesh(strutGeo, carbonMat);
+    s3.position.set(0.2, 0.09, -0.2);
+    const s4 = new THREE.Mesh(strutGeo, carbonMat);
+    s4.position.set(-0.2, 0.09, -0.2);
+    group.add(s1, s2, s3, s4);
+
+    return group;
+  }
+
+  // Sky-Ranger VTOL Helicopter
+  createHelicopter(options = {}) {
+    const group = new THREE.Group();
+    group.name = 'SkyRangerHelicopter';
+
+    const bodyColor = options.bodyColor || 0x0f172a; // Deep slate navy
+    const stripeColor = options.stripeColor || 0xf97316; // Neon orange accent
+
+    const bodyMat = new THREE.MeshStandardMaterial({ color: bodyColor, metalness: 0.6, roughness: 0.35 });
+    const stripeMat = new THREE.MeshStandardMaterial({ color: stripeColor, roughness: 0.4 });
+    const metalMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.85, roughness: 0.2 });
+    const glassMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.65, roughness: 0.1 });
+    const rotorMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.5 });
+    const beaconMat = new THREE.MeshBasicMaterial({ color: 0xef4444 });
+
+    // Main Fuselage Cabin
+    const cabinGeo = new THREE.BoxGeometry(2.2, 2.0, 4.4);
+    const cabin = new THREE.Mesh(cabinGeo, bodyMat);
+    cabin.position.set(0, 1.8, 0.4);
+    cabin.castShadow = true;
+    group.add(cabin);
+
+    // Aerodynamic Nose & Canopy Cockpit
+    const noseGeo = new THREE.BoxGeometry(2.0, 1.5, 1.8);
+    const nose = new THREE.Mesh(noseGeo, bodyMat);
+    nose.position.set(0, 1.5, 2.8);
+    group.add(nose);
+
+    const glassGeo = new THREE.BoxGeometry(1.9, 1.2, 1.6);
+    const glass = new THREE.Mesh(glassGeo, glassMat);
+    glass.position.set(0, 1.8, 2.4);
+    group.add(glass);
+
+    // Accent Stripes
+    const stripe = new THREE.Mesh(new THREE.BoxGeometry(2.24, 0.3, 4.4), stripeMat);
+    stripe.position.set(0, 1.6, 0.4);
+    group.add(stripe);
+
+    // Tail Boom
+    const boomGeo = new THREE.CylinderGeometry(0.35, 0.55, 5.5, 8);
+    boomGeo.rotateX(Math.PI / 2);
+    const boom = new THREE.Mesh(boomGeo, bodyMat);
+    boom.position.set(0, 2.0, -3.8);
+    group.add(boom);
+
+    // Vertical Stabilizer Fin
+    const finGeo = new THREE.BoxGeometry(0.12, 1.8, 1.2);
+    const fin = new THREE.Mesh(finGeo, stripeMat);
+    fin.position.set(0, 2.6, -6.2);
+    group.add(fin);
+
+    // Red Warning Beacon on top of fin
+    const beacon = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), beaconMat);
+    beacon.position.set(0, 3.55, -6.2);
+    group.add(beacon);
+
+    // Landing Skids
+    const skidPipeGeo = new THREE.CylinderGeometry(0.08, 0.08, 5.2, 8);
+    skidPipeGeo.rotateX(Math.PI / 2);
+    const skidL = new THREE.Mesh(skidPipeGeo, metalMat);
+    skidL.position.set(-1.3, 0.25, 0.6);
+    const skidR = new THREE.Mesh(skidPipeGeo, metalMat);
+    skidR.position.set(1.3, 0.25, 0.6);
+    group.add(skidL, skidR);
+
+    // Skid Struts
+    const strutGeo = new THREE.CylinderGeometry(0.06, 0.06, 1.1, 8);
+    const str1 = new THREE.Mesh(strutGeo, metalMat);
+    str1.position.set(-1.1, 0.75, 1.6);
+    str1.rotation.z = 0.25;
+    const str2 = new THREE.Mesh(strutGeo, metalMat);
+    str2.position.set(1.1, 0.75, 1.6);
+    str2.rotation.z = -0.25;
+    const str3 = new THREE.Mesh(strutGeo, metalMat);
+    str3.position.set(-1.1, 0.75, -0.6);
+    str3.rotation.z = 0.25;
+    const str4 = new THREE.Mesh(strutGeo, metalMat);
+    str4.position.set(1.1, 0.75, -0.6);
+    str4.rotation.z = -0.25;
+    group.add(str1, str2, str3, str4);
+
+    // Main Rotor Mast & 4 Blades
+    const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.8, 8), metalMat);
+    mast.position.set(0, 3.1, 0.5);
+    group.add(mast);
+
+    const mainRotorGroup = new THREE.Group();
+    mainRotorGroup.position.set(0, 3.5, 0.5);
+
+    const hubGeo = new THREE.CylinderGeometry(0.4, 0.4, 0.2, 10);
+    const hub = new THREE.Mesh(hubGeo, metalMat);
+    mainRotorGroup.add(hub);
+
+    const bladeGeo = new THREE.BoxGeometry(0.3, 0.04, 5.2);
+    const blade1 = new THREE.Mesh(bladeGeo, rotorMat);
+    blade1.position.set(0, 0, 2.6);
+    const blade2 = new THREE.Mesh(bladeGeo, rotorMat);
+    blade2.position.set(0, 0, -2.6);
+    const blade3 = new THREE.Mesh(bladeGeo, rotorMat);
+    blade3.rotation.y = Math.PI / 2;
+    blade3.position.set(2.6, 0, 0);
+    const blade4 = new THREE.Mesh(bladeGeo, rotorMat);
+    blade4.rotation.y = Math.PI / 2;
+    blade4.position.set(-2.6, 0, 0);
+    mainRotorGroup.add(blade1, blade2, blade3, blade4);
+
+    group.add(mainRotorGroup);
+    group.mainRotor = mainRotorGroup;
+
+    // Tail Rotor
+    const tailRotorGroup = new THREE.Group();
+    tailRotorGroup.position.set(0.2, 2.7, -6.2);
+    const tailBladeGeo = new THREE.BoxGeometry(0.02, 1.4, 0.14);
+    const tBlade = new THREE.Mesh(tailBladeGeo, rotorMat);
+    tailRotorGroup.add(tBlade);
+    group.add(tailRotorGroup);
+    group.tailRotor = tailRotorGroup;
+
+    return group;
+  }
+
+  // Futuristic BKC Cyber Cruiser
+  createCyberCar(options = {}) {
+    const group = new THREE.Group();
+    group.name = 'CyberCruiser';
+
+    const bodyMat = new THREE.MeshStandardMaterial({ color: 0x090d16, metalness: 0.9, roughness: 0.2 });
+    const neonCyan = new THREE.MeshBasicMaterial({ color: 0x00f3ff });
+    const wheelMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.8 });
+
+    // Wedge Body
+    const body = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.65, 4.4), bodyMat);
+    body.position.y = 0.55;
+    group.add(body);
+
+    // Neon Underglow Strips
+    const glowL = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.05, 3.6), neonCyan);
+    glowL.position.set(-1.05, 0.2, 0);
+    const glowR = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.05, 3.6), neonCyan);
+    glowR.position.set(1.05, 0.2, 0);
+    group.add(glowL, glowR);
+
+    // Cockpit Roof
+    const roof = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.55, 2.2), bodyMat);
+    roof.position.set(0, 1.05, -0.2);
+    group.add(roof);
+
+    // Wheels
+    const wGeo = new THREE.CylinderGeometry(0.38, 0.38, 0.3, 16);
+    wGeo.rotateZ(Math.PI / 2);
+    [
+      { x: -1.05, z: 1.4 },
+      { x: 1.05, z: 1.4 },
+      { x: -1.05, z: -1.4 },
+      { x: 1.05, z: -1.4 }
+    ].forEach(p => {
+      const w = new THREE.Mesh(wGeo, wheelMat);
+      w.position.set(p.x, 0.38, p.z);
+      group.add(w);
+    });
+
+    return group;
+  }
 }

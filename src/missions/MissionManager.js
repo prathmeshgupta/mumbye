@@ -88,6 +88,39 @@ export class MissionManager {
     }));
   }
 
+  startBounty(bounty) {
+    if (this.activeMission) {
+      window.dispatchEvent(new CustomEvent('mumbye_dialog_message', {
+        detail: { speaker: "Bounty Board", text: "Complete your active contract before starting a new one!" }
+      }));
+      return;
+    }
+
+    this.activeMission = {
+      id: bounty.id,
+      title: bounty.title,
+      rewardCash: bounty.payout,
+      checkpoints: [
+        {
+          text: `${bounty.description} (${bounty.district})`,
+          target: bounty.target,
+          radius: 8.0,
+          type: 'reach',
+          timer: bounty.timer
+        }
+      ]
+    };
+    this.currentCheckpointIndex = 0;
+    this.missionTimer = bounty.timer;
+    this.audioEngine?.playMissionSound(true);
+    window.dispatchEvent(new CustomEvent('mumbye_mission_started', {
+      detail: { mission: this.activeMission, checkpoint: this.activeMission.checkpoints[0] }
+    }));
+    window.dispatchEvent(new CustomEvent('mumbye_dialog_message', {
+      detail: { speaker: "Bounty Contract", text: `Contract accepted: ${bounty.title}. Reward: ₹${bounty.payout}!` }
+    }));
+  }
+
   update(delta, playerPos, player) {
     // Story mission timer & checkpoint tracking
     if (this.activeMission) {

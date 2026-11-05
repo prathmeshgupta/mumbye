@@ -280,6 +280,78 @@ async function runTestSuite() {
     throw new Error('Hospital respawn failed to clear wanted heat');
   }
 
+  // Test Action 7: SkyEye Drone Deployment & EMP Taser
+  console.log('  👉 Testing SkyEye Surveillance Drone Deployment [U]...');
+  await sendCommand('Runtime.evaluate', {
+    expression: `window.mumbyeGame.toggleDrone();`
+  });
+  const droneState = await sendCommand('Runtime.evaluate', {
+    expression: `({
+      isActive: window.mumbyeGame.drone.isActive,
+      battery: window.mumbyeGame.drone.battery,
+      signal: window.mumbyeGame.drone.signalStrength,
+      cameraMode: window.mumbyeGame.cameraManager.mode
+    })`,
+    returnByValue: true
+  });
+  console.log('  ✅ Drone Deployment Status:', droneState.result.value);
+  if (!droneState.result.value.isActive || droneState.result.value.cameraMode !== 'drone') {
+    throw new Error('SkyEye drone failed to deploy or camera mode mismatch');
+  }
+
+  // Test EMP Dart
+  await sendCommand('Runtime.evaluate', {
+    expression: `window.mumbyeGame.drone.fireEMPDart(window.mumbyeGame.trafficManager, window.mumbyeGame.pedestrianManager, window.mumbyeGame.policeSystem);`
+  });
+  console.log('  ✅ Drone EMP Dart fired with particle burst');
+
+  // Recall Drone
+  await sendCommand('Runtime.evaluate', {
+    expression: `window.mumbyeGame.toggleDrone();`
+  });
+  console.log('  ✅ Drone recalled cleanly, control returned to Kabir');
+
+  // Test Action 8: Neighborhood Granularity & BKC Cyber District
+  console.log('  👉 Testing Neighborhood Granularity Query (BKC Cyber City & Colaba Docks)...');
+  const districtRes = await sendCommand('Runtime.evaluate', {
+    expression: `({
+      bkc: window.mumbyeGame.cityMap.getNeighborhoodAt(240, -80),
+      docks: window.mumbyeGame.cityMap.getNeighborhoodAt(240, 110),
+      marine: window.mumbyeGame.cityMap.getNeighborhoodAt(-50, 0)
+    })`,
+    returnByValue: true
+  });
+  console.log('  ✅ District Geo-Queries:', districtRes.result.value);
+  if (districtRes.result.value.bkc.id !== 'bkc' || districtRes.result.value.docks.id !== 'docks') {
+    throw new Error('Neighborhood detection failed for expanded districts');
+  }
+
+  // Test Action 9: Sky-Ranger Helicopter & Rooftop Helipad
+  console.log('  👉 Testing Sky-Ranger Helicopter on AstraCorp Rooftop Helipad...');
+  const heliState = await sendCommand('Runtime.evaluate', {
+    expression: `({
+      type: window.mumbyeGame.helicopter.type,
+      pos: { x: window.mumbyeGame.helicopter.position.x, y: window.mumbyeGame.helicopter.position.y, z: window.mumbyeGame.helicopter.position.z },
+      groundY: window.mumbyeGame.helicopter.groundY
+    })`,
+    returnByValue: true
+  });
+  console.log('  ✅ Helicopter Status at BKC Helipad:', heliState.result.value);
+  if (heliState.result.value.pos.y < 60) {
+    throw new Error('Helicopter is not situated on AstraCorp rooftop helipad');
+  }
+
+  // Test Action 10: Station 5 Cyber BKC 107.5 Radio
+  console.log('  👉 Testing Station 5: Cyber BKC 107.5 Procedural Synthwave...');
+  const station5Res = await sendCommand('Runtime.evaluate', {
+    expression: `window.mumbyeGame.audioEngine.setRadioStation(5)`,
+    returnByValue: true
+  });
+  console.log('  ✅ Switched to Futuristic Station:', station5Res.result.value.name, `(${station5Res.result.value.genre})`);
+  if (station5Res.result.value.name !== 'Cyber BKC 107.5') {
+    throw new Error('Station 5 failed to activate');
+  }
+
   // Step 6: Capture Screenshot
   console.log('\n[6/6] Capturing in-game rendered screenshot...');
   const screenshotRes = await sendCommand('Page.captureScreenshot', { format: 'png' });

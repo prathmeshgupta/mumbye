@@ -1,9 +1,11 @@
 // MUMBYE: MAXIMUM CITY - Interactive Bambaiya Smartphone
+import { DYNAMIC_BOUNTIES } from '../missions/MissionsData.js';
+
 export class PhoneUI {
   constructor(game) {
     this.game = game;
     this.isOpen = false;
-    this.currentApp = 'home'; // 'home', 'contacts', 'cheats', 'radio'
+    this.currentApp = 'home'; // 'home', 'contacts', 'cheats', 'radio', 'bounties', 'stocks'
     this.container = null;
 
     this.cheatsList = [
@@ -11,6 +13,8 @@ export class PhoneUI {
       { code: 'SEHAT', desc: 'Full Health & 100 Armor' },
       { code: 'HATHIYAR', desc: 'Unlock All Weapons & Max Ammo' },
       { code: 'POLICEHATAO', desc: 'Clear All Wanted Stars' },
+      { code: 'DRONE', desc: 'Instant Deploy SkyEye Drone' },
+      { code: 'HELI', desc: 'Teleport to AstraCorp Helipad' },
       { code: 'SUPERCAR', desc: 'Spawn Bollywood Supercar' },
       { code: 'AUTO', desc: 'Spawn Mumbai Auto Rickshaw' },
       { code: 'TAXI', desc: 'Spawn Kaali-Peeli Taxi' },
@@ -69,6 +73,10 @@ export class PhoneUI {
       this.renderCheatsScreen();
     } else if (this.currentApp === 'radio') {
       this.renderRadioScreen();
+    } else if (this.currentApp === 'bounties') {
+      this.renderBountiesScreen();
+    } else if (this.currentApp === 'stocks') {
+      this.renderStocksScreen();
     }
   }
 
@@ -87,6 +95,18 @@ export class PhoneUI {
             <button class="phone-app-icon" id="app-contacts">
               <div class="icon-box icon-green">📞</div>
               <span>Contacts</span>
+            </button>
+            <button class="phone-app-icon" id="app-drone">
+              <div class="icon-box icon-cyan">🛸</div>
+              <span>SkyEye</span>
+            </button>
+            <button class="phone-app-icon" id="app-bounties">
+              <div class="icon-box icon-gold">🎯</div>
+              <span>Bounties</span>
+            </button>
+            <button class="phone-app-icon" id="app-stocks">
+              <div class="icon-box icon-emerald">📈</div>
+              <span>Stocks</span>
             </button>
             <button class="phone-app-icon" id="app-cheats">
               <div class="icon-box icon-purple">⚡</div>
@@ -108,6 +128,18 @@ export class PhoneUI {
 
     document.getElementById('app-contacts')?.addEventListener('click', () => {
       this.currentApp = 'contacts';
+      this.render();
+    });
+    document.getElementById('app-drone')?.addEventListener('click', () => {
+      this.close();
+      window.dispatchEvent(new CustomEvent('mumbye_toggle_drone'));
+    });
+    document.getElementById('app-bounties')?.addEventListener('click', () => {
+      this.currentApp = 'bounties';
+      this.render();
+    });
+    document.getElementById('app-stocks')?.addEventListener('click', () => {
+      this.currentApp = 'stocks';
       this.render();
     });
     document.getElementById('app-cheats')?.addEventListener('click', () => {
@@ -255,6 +287,13 @@ export class PhoneUI {
     } else if (code === 'POLICEHATAO') {
       g.policeSystem.setWantedLevel(0);
       this.showCheatAlert("CHEAT ACTIVATED: Wanted Stars Cleared!");
+    } else if (code === 'DRONE') {
+      g.toggleDrone();
+      this.showCheatAlert("CHEAT ACTIVATED: SkyEye Drone Deployed!");
+    } else if (code === 'HELI') {
+      g.player.position.set(240, 68.8, -78);
+      g.player.velocity.set(0, 0, 0);
+      this.showCheatAlert("CHEAT ACTIVATED: Teleported to AstraCorp Helipad!");
     } else if (code === 'SUPERCAR') {
       const p = g.player.position;
       g.trafficManager.spawnTrafficVehicle(p.x + 3, p.z + 3, 'supercar');
@@ -327,6 +366,114 @@ export class PhoneUI {
         }
         this.renderRadioScreen();
       });
+    });
+  }
+
+  renderBountiesScreen() {
+    const listHtml = DYNAMIC_BOUNTIES.map(b => `
+      <div class="bounty-card" data-id="${b.id}">
+        <div class="bounty-top">
+          <span class="bounty-title">${b.title}</span>
+          <span class="bounty-payout">₹${b.payout}</span>
+        </div>
+        <div class="bounty-district">📍 ${b.district} • ⏱️ ${b.timer}s limit</div>
+        <div class="bounty-desc">${b.description}</div>
+        <button class="bounty-accept-btn" data-id="${b.id}">ACCEPT CONTRACT</button>
+      </div>
+    `).join('');
+
+    this.container.innerHTML = `
+      <div class="phone-frame">
+        <div class="phone-status-bar">
+          <span>Bambaiya Bounties</span>
+          <span>${this.formatGameTime()}</span>
+          <button class="phone-back-btn" id="phone-back">◀ Home</button>
+        </div>
+        <div class="phone-screen phone-list-screen">
+          <div class="phone-section-title">⚡ ACTIVE MINI-CONTRACTS</div>
+          ${listHtml}
+        </div>
+        <div class="phone-home-bar" id="phone-home-btn"></div>
+      </div>
+    `;
+
+    document.getElementById('phone-back')?.addEventListener('click', () => {
+      this.currentApp = 'home';
+      this.render();
+    });
+    document.getElementById('phone-home-btn')?.addEventListener('click', () => this.close());
+
+    this.container.querySelectorAll('.bounty-accept-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const id = btn.getAttribute('data-id');
+        const bounty = DYNAMIC_BOUNTIES.find(b => b.id === id);
+        if (bounty) {
+          this.close();
+          this.game.missionManager?.startBounty(bounty);
+        }
+      });
+    });
+  }
+
+  renderStocksScreen() {
+    const stocks = [
+      { sym: 'VADA', name: 'VadaPav Corp', price: 142.50, change: '+5.4%', up: true },
+      { sym: 'ASTRA', name: 'AstraCorp Cybernetics', price: 840.10, change: '+12.8%', up: true },
+      { sym: 'LRL', name: 'LocalRailways Suburban', price: 68.20, change: '-1.4%', up: false },
+      { sym: 'BNTR', name: 'Bandra Motors Nitro', price: 320.00, change: '+8.2%', up: true },
+      { sym: 'MBY', name: 'Mumbye Coin Crypto', price: 4120.00, change: '+24.5%', up: true }
+    ];
+
+    const listHtml = stocks.map(s => `
+      <div class="stock-card">
+        <div class="stock-top">
+          <span class="stock-sym">${s.sym}</span>
+          <span class="stock-price">₹${s.price.toFixed(2)}</span>
+        </div>
+        <div class="stock-bottom">
+          <span class="stock-name">${s.name}</span>
+          <span class="stock-change ${s.up ? 'stk-up' : 'stk-down'}">${s.change}</span>
+        </div>
+      </div>
+    `).join('');
+
+    this.container.innerHTML = `
+      <div class="phone-frame">
+        <div class="phone-status-bar">
+          <span>Bazaar Ticker</span>
+          <span>${this.formatGameTime()}</span>
+          <button class="phone-back-btn" id="phone-back">◀ Home</button>
+        </div>
+        <div class="phone-screen phone-list-screen">
+          <div class="phone-section-title">📊 MUMBAI STOCK EXCHANGE</div>
+          ${listHtml}
+          <div class="stock-actions">
+            <button class="invest-btn" id="btn-quick-invest">💰 Quick Invest ₹1,000</button>
+          </div>
+        </div>
+        <div class="phone-home-bar" id="phone-home-btn"></div>
+      </div>
+    `;
+
+    document.getElementById('phone-back')?.addEventListener('click', () => {
+      this.currentApp = 'home';
+      this.render();
+    });
+    document.getElementById('phone-home-btn')?.addEventListener('click', () => this.close());
+
+    document.getElementById('btn-quick-invest')?.addEventListener('click', () => {
+      if (this.game.player.cash < 1000) {
+        this.showCheatAlert("Insufficient funds to invest ₹1,000.");
+        return;
+      }
+      this.game.player.cash -= 1000;
+      const profitRate = (Math.random() * 0.4) - 0.1; // -10% to +30%
+      const profit = Math.round(1000 * (1 + profitRate));
+      setTimeout(() => {
+        this.game.player.cash += profit;
+        this.game.audioEngine?.playCoinCash();
+        this.showCheatAlert(`Bazaar Dividend Received: ₹${profit} (${profitRate >= 0 ? '+' : ''}${Math.round(profitRate * 100)}%)`);
+      }, 1500);
     });
   }
 

@@ -16,6 +16,8 @@ import { TrainSystem } from '../entities/TrainSystem.js';
 import { MissionManager } from '../missions/MissionManager.js';
 import { DLCManager } from '../dlc/DLCManager.js';
 import { UIManager } from '../ui/UIManager.js';
+import { Drone } from '../entities/Drone.js';
+import { Helicopter } from '../entities/Helicopter.js';
 
 // Bundled DLCs
 import { BandraDriftDLC } from '../dlc/bundled/BandraDriftDLC.js';
@@ -70,8 +72,24 @@ export class Engine {
     this.policeSystem = new PoliceSystem(this.scene, this.physics, this.audioEngine, this.particleSystem);
     this.trainSystem = new TrainSystem(this.scene, this.audioEngine);
 
+    // SkyEye Drone (Deployable with 'U' or Phone App)
+    const droneMesh = this.factory.createDrone();
+    droneMesh.visible = false;
+    this.scene.add(droneMesh);
+    this.drone = new Drone(droneMesh, this.audioEngine, this.particleSystem, this.physics);
+    this.cameraManager.setTargetDrone(this.drone);
+
+    // Sky-Ranger Helicopter at AstraCorp Helipad (BKC Cyber City at x: 240, y: 68.4, z: -80)
+    const heliMesh = this.factory.createHelicopter();
+    heliMesh.position.set(240, 68.4, -80);
+    this.scene.add(heliMesh);
+    this.helicopter = new Helicopter(heliMesh, this.audioEngine, this.particleSystem, this.physics);
+    this.helicopter.groundY = 68.4;
+    this.cameraManager.setTargetHelicopter(this.helicopter);
+
     // Gameplay
     this.missionManager = new MissionManager(this.audioEngine);
+    this.currentNeighborhoodId = null;
 
     // DLC Framework
     this.dlcManager = new DLCManager(this);
@@ -158,10 +176,20 @@ export class Engine {
       if (e.code === 'KeyT') {
         this.missionManager.toggleTaxiMode(this.player);
       }
+      if (e.code === 'KeyU') {
+        this.toggleDrone();
+      }
+    });
+
+    window.addEventListener('mumbye_toggle_drone', () => {
+      this.toggleDrone();
     });
 
     // Player Wasted (death) / Hospital Respawn
     window.addEventListener('mumbye_player_wasted', () => {
+      if (this.drone.isActive) {
+        this.drone.recall();
+      }
       // Clear all police heat & despawn active cruisers immediately
       this.policeSystem.setWantedLevel(0);
       this.policeSystem.clearPolice();
@@ -182,6 +210,28 @@ export class Engine {
         }));
       }, 3500);
     });
+  }
+
+  toggleDrone() {
+    if (this.drone.isActive) {
+      this.drone.recall();
+      this.cameraManager.setMode(this.player.isDriving ? (this.player.currentVehicle?.type === 'helicopter' ? 'helicopter' : 'in_vehicle') : 'on_foot');
+      window.dispatchEvent(new CustomEvent('mumbye_dialog_message', {
+        detail: { speaker: "SkyEye Drone", text: "Drone recalled. Control returned to Kabir." }
+      }));
+    } else {
+      if (this.player.isDriving) {
+        window.dispatchEvent(new CustomEvent('mumbye_dialog_message', {
+          detail: { speaker: "SkyEye Drone", text: "Cannot deploy drone while operating a vehicle." }
+        }));
+        return;
+      }
+      this.drone.deploy(this.player.position, this.cameraManager.yaw);
+      this.cameraManager.setMode('drone');
+      window.dispatchEvent(new CustomEvent('mumbye_dialog_message', {
+        detail: { speaker: "SkyEye Drone", text: "Drone online! [WASD] Fly | [Space/Shift] Elevate | [Left Click] EMP Dart | [U] Recall" }
+      }));
+    }
   }
 
   start() {
@@ -209,14 +259,33 @@ export class Engine {
     // Update Input
     this.input.update();
 
-    // Update Player & Vehicles
-    const allVehicles = this.trafficManager.getAllVehicles();
-    const stalls = this.cityMap.props?.interactiveStalls || [];
-    this.player.update(delta, this.input, allVehicles, stalls);
+    // Update Drone
+    if (this.drone.isActive) {
+      this.drone.update(delta, this.input, this.player.position, this.trafficManager, this.pedestrianManager, this.policeSystem);
+    }
 
-    // If player is driving, update player's vehicle
-    if (this.player.isDriving && this.player.currentVehicle) {
-      this.player.currentVehicle.update(delta, this.input);
+    // Update Helicopter
+    this.helicopter.update(delta, this.input);
+
+    // Update Player & Vehicles (if drone is not active)
+    const allVehicles = [...this.trafficManager.getAllVehicles(), this.helicopter];
+    const stalls = this.cityMap.props?.interactiveStalls || [];
+    const elevatorPads = this.cityMap.elevatorPads || [];
+    if (!this.drone.isActive) {
+      this.player.update(delta, this.input, allVehicles, stalls, elevatorPads);
+
+      // If player is driving, update player's vehicle
+      if (this.player.isDriving && this.player.currentVehicle && this.player.currentVehicle !== this.helicopter) {
+        this.player.currentVehicle.update(delta, this.input);
+      }
+    }
+
+    // Dynamic Neighborhood Tracking & HUD Alerts
+    const currentLoc = this.drone.isActive ? this.drone.position : this.player.position;
+    const district = this.cityMap.getNeighborhoodAt(currentLoc.x, currentLoc.z);
+    if (district && district.id !== this.currentNeighborhoodId) {
+      this.currentNeighborhoodId = district.id;
+      window.dispatchEvent(new CustomEvent('mumbye_neighborhood_entered', { detail: district }));
     }
 
     // Update Traffic, Pedestrians & Police
