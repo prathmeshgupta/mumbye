@@ -129,7 +129,8 @@ export class UIManager {
     // Cash slot increment
     if (this.cashDisplay) {
       if (this.displayedCash !== player.cash) {
-        this.displayedCash = Math.round(THREE.MathUtils.lerp(this.displayedCash, player.cash, delta * 10));
+        const factor = Math.min(1.0, delta * 10);
+        this.displayedCash = Math.round(this.displayedCash + (player.cash - this.displayedCash) * factor);
         this.cashDisplay.innerText = `₹ ${this.displayedCash.toLocaleString('en-IN')}`;
       }
     }
