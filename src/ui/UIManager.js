@@ -3,6 +3,7 @@ import { Minimap } from './Minimap.js';
 import { PhoneUI } from './PhoneUI.js';
 import { DLCModal } from './DLCModal.js';
 import { DialogBox } from './DialogBox.js';
+import { PauseMenu } from './PauseMenu.js';
 
 export class UIManager {
   constructor(game) {
@@ -13,6 +14,7 @@ export class UIManager {
     this.phone = null;
     this.dlcModal = null;
     this.dialogBox = null;
+    this.pauseMenu = null;
 
     // HUD Elements
     this.healthBar = null;
@@ -40,6 +42,7 @@ export class UIManager {
     this.phone = new PhoneUI(this.game);
     this.dlcModal = new DLCModal(this.game.dlcManager);
     this.dialogBox = new DialogBox();
+    this.pauseMenu = new PauseMenu(this.game);
 
     // Cache HUD DOM references
     this.healthBar = document.getElementById('hud-health-fill');
@@ -106,6 +109,10 @@ export class UIManager {
   }
 
   update(delta) {
+    if (this.pauseMenu) {
+      this.pauseMenu.updateFps();
+    }
+
     const player = this.game.player;
     if (!player) return;
 

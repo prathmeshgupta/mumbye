@@ -1,7 +1,9 @@
-// MUMBYE: MAXIMUM CITY - Mumbai Police ("Mama") & 5-Star Wanted Level System
+// MUMBYE: MAXIMUM CITY - Metro Enforcement & 5-Star Wanted Level System
 import * as THREE from 'three';
 import { ModelFactory } from '../world/ModelFactory.js';
 import { Vehicle } from './Vehicle.js';
+
+const _tempVec = new THREE.Vector3();
 
 export class PoliceSystem {
   constructor(scene, physics, audioEngine, particleSystem) {
@@ -18,12 +20,12 @@ export class PoliceSystem {
     this.cooldownTimer = 0;
     this.isFlashingStars = false;
 
-    this.mamaQuotes = [
-      "Aye ruk! Kidhar bhaagta hai!",
-      "Lathi padega toh seedha chalega!",
-      "Mama ko challenge mat kar!",
-      "Gadi side me laga!",
-      "Chowki chal pehle!"
+    this.enforcerQuotes = [
+      "Halt! Step away from the vehicle!",
+      "Surrender immediately!",
+      "Do not resist Metro Security!",
+      "Pull over to the curb!",
+      "Security unit has visual on suspect!"
     ];
   }
 
@@ -48,10 +50,12 @@ export class PoliceSystem {
   }
 
   clearPolice() {
-    this.policeOfficers.forEach(p => this.scene.remove(p.mesh));
+    this.policeOfficers.forEach(p => {
+      if (p.mesh.parent) p.mesh.parent.remove(p.mesh);
+    });
     this.policeVehicles.forEach(v => {
       v.audioEngine?.playPoliceSiren(false);
-      this.scene.remove(v.mesh);
+      if (v.mesh.parent) v.mesh.parent.remove(v.mesh);
     });
     this.policeOfficers = [];
     this.policeVehicles = [];
@@ -120,14 +124,14 @@ export class PoliceSystem {
     for (let i = this.policeOfficers.length - 1; i >= 0; i--) {
       const cop = this.policeOfficers[i];
 
-      const toPlayer = playerPos.clone().sub(cop.mesh.position).setY(0);
-      const dist = toPlayer.length();
+      _tempVec.subVectors(playerPos, cop.mesh.position).setY(0);
+      const dist = _tempVec.length();
 
       if (dist > 1.8) {
         // Run toward player
-        toPlayer.normalize();
-        cop.mesh.rotation.y = Math.atan2(toPlayer.x, toPlayer.z);
-        cop.mesh.position.addScaledVector(toPlayer, cop.speed * delta);
+        _tempVec.normalize();
+        cop.mesh.rotation.y = Math.atan2(_tempVec.x, _tempVec.z);
+        cop.mesh.position.addScaledVector(_tempVec, cop.speed * delta);
 
         cop.animTime += delta * 12;
         const swing = Math.sin(cop.animTime);
@@ -144,9 +148,9 @@ export class PoliceSystem {
           this.audioEngine?.playBatSwing();
           player.takeDamage(15);
           if (Math.random() < 0.4) {
-            const quote = this.mamaQuotes[Math.floor(Math.random() * this.mamaQuotes.length)];
+            const quote = this.enforcerQuotes[Math.floor(Math.random() * this.enforcerQuotes.length)];
             window.dispatchEvent(new CustomEvent('mumbye_dialog_message', {
-              detail: { speaker: "Mumbai Police", text: quote }
+              detail: { speaker: "Metro Security", text: quote }
             }));
           }
         }
@@ -160,8 +164,8 @@ export class PoliceSystem {
       const pv = this.policeVehicles[i];
       if (pv.isDestroyed) continue;
 
-      const toPlayer = playerPos.clone().sub(pv.position).setY(0);
-      const desiredRot = Math.atan2(toPlayer.x, toPlayer.z);
+      _tempVec.subVectors(playerPos, pv.position).setY(0);
+      const desiredRot = Math.atan2(_tempVec.x, _tempVec.z);
 
       let diff = desiredRot - pv.rotation.y;
       while (diff > Math.PI) diff -= Math.PI * 2;

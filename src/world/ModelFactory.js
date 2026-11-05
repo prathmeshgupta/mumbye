@@ -333,7 +333,7 @@ export class ModelFactory {
     return group;
   }
 
-  // Mumbai Police Gypsy / SUV (PCR Van)
+  // Metro Patrol SUV (Security Cruiser)
   createPoliceCar() {
     const group = new THREE.Group();
     group.name = 'PoliceCar';

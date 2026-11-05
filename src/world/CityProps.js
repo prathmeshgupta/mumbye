@@ -1,4 +1,4 @@
-// MUMBYE: MAXIMUM CITY - Mumbai Street Props & Interactive Stalls
+// MUMBYE: MAXIMUM CITY - Mumbai Street Props, Landmarks, Trees & Interactive Stalls
 import * as THREE from 'three';
 
 export class CityProps {
@@ -7,6 +7,101 @@ export class CityProps {
     this.physics = physics;
     this.interactiveStalls = []; // Vada Pav & Chai stalls
     this.stuntRamps = [];
+
+    // Shared Materials Cache
+    this.palmTrunkMat = new THREE.MeshStandardMaterial({ color: 0x5a3e28, roughness: 0.9 });
+    this.palmLeafMat = new THREE.MeshStandardMaterial({ color: 0x1f7a38, roughness: 0.6, side: THREE.DoubleSide });
+  }
+
+  // Iconic Tropical Palm Tree (for Marine Drive Promenade)
+  createPalmTree(x, z, scale = 1.0) {
+    const group = new THREE.Group();
+    group.position.set(x, 0, z);
+
+    // Curved Trunk
+    const trunkHeight = 7.5 * scale;
+    const trunkGeo = new THREE.CylinderGeometry(0.18 * scale, 0.35 * scale, trunkHeight, 7);
+    const trunk = new THREE.Mesh(trunkGeo, this.palmTrunkMat);
+    trunk.position.y = trunkHeight / 2;
+    trunk.rotation.z = (Math.random() - 0.5) * 0.15;
+    group.add(trunk);
+
+    // Palm Crown: 8 Drooping Fronds
+    const crown = new THREE.Group();
+    crown.position.set(0, trunkHeight, 0);
+
+    const frondGeo = new THREE.BoxGeometry(0.5 * scale, 0.04, 3.2 * scale);
+    for (let i = 0; i < 8; i++) {
+      const frond = new THREE.Mesh(frondGeo, this.palmLeafMat);
+      const angle = (i / 8) * Math.PI * 2;
+      frond.rotation.y = angle;
+      frond.rotation.x = 0.45;
+      frond.position.set(Math.sin(angle) * 1.3 * scale, -0.4 * scale, Math.cos(angle) * 1.3 * scale);
+      crown.add(frond);
+    }
+    group.add(crown);
+
+    this.scene.add(group);
+
+    const colBox = new THREE.Box3(
+      new THREE.Vector3(x - 0.4, 0, z - 0.4),
+      new THREE.Vector3(x + 0.4, trunkHeight, z + 0.4)
+    );
+    this.physics.addStaticBox(colBox, { type: 'tree' });
+
+    return group;
+  }
+
+  // Metro General Hospital (Player Respawn Landmark)
+  createHospital(x, z) {
+    const group = new THREE.Group();
+    group.name = 'MetroHospital';
+    group.position.set(x, 0, z);
+
+    const whiteMat = new THREE.MeshStandardMaterial({ color: 0xf1f5f9, roughness: 0.5 });
+    const tealMat = new THREE.MeshStandardMaterial({ color: 0x0d9488, roughness: 0.4 });
+    const redMat = new THREE.MeshBasicMaterial({ color: 0xef4444 });
+    const glassMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, roughness: 0.2 });
+
+    // Main Hospital Block
+    const mainBlock = new THREE.Mesh(new THREE.BoxGeometry(28, 22, 22), whiteMat);
+    mainBlock.position.y = 11;
+    mainBlock.receiveShadow = true;
+    group.add(mainBlock);
+
+    // Teal Accent Upper Band
+    const band = new THREE.Mesh(new THREE.BoxGeometry(28.2, 3.5, 22.2), tealMat);
+    band.position.y = 19;
+    group.add(band);
+
+    // Front Glass Entrance Canopy
+    const entrance = new THREE.Mesh(new THREE.BoxGeometry(10, 4.5, 5), glassMat);
+    entrance.position.set(0, 2.25, 12);
+    group.add(entrance);
+
+    // Illuminated Red Cross Symbol (+)
+    const crossVert = new THREE.Mesh(new THREE.BoxGeometry(1.2, 5.0, 0.3), redMat);
+    crossVert.position.set(0, 16.5, 11.2);
+    const crossHoriz = new THREE.Mesh(new THREE.BoxGeometry(5.0, 1.2, 0.3), redMat);
+    crossHoriz.position.set(0, 16.5, 11.2);
+    group.add(crossVert, crossHoriz);
+
+    // Signboard
+    const signBoard = new THREE.Mesh(new THREE.BoxGeometry(16, 1.8, 0.2), new THREE.MeshBasicMaterial({ color: 0x0f172a }));
+    signBoard.position.set(0, 12.8, 11.2);
+    group.add(signBoard);
+
+    // Red Cross Emergency Beacon Light
+    const beacon = new THREE.PointLight(0xef4444, 2.0, 18);
+    beacon.position.set(0, 17, 12.5);
+    group.add(beacon);
+
+    this.scene.add(group);
+
+    const box = new THREE.Box3().setFromObject(mainBlock);
+    this.physics.addStaticBox(box, { type: 'hospital' });
+
+    return group;
   }
 
   // Vada Pav & Cutting Chai Tapri (Interactive Food Stall)
@@ -169,7 +264,6 @@ export class CityProps {
 
     const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.14, 5.5, 8), ironMat);
     pole.position.y = 2.75;
-    pole.castShadow = true;
     group.add(pole);
 
     const arm = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.08, 0.1), ironMat);
@@ -181,7 +275,7 @@ export class CityProps {
     group.add(lantern);
 
     // Street Light Source
-    const light = new THREE.PointLight(0xffe899, 1.8, 22);
+    const light = new THREE.PointLight(0xffe899, 1.4, 18);
     light.position.set(1.0, 5.0, 0);
     group.add(light);
 
@@ -214,9 +308,9 @@ export class CityProps {
     group.add(poster);
 
     // Spotlights shining on billboard
-    const spotL = new THREE.PointLight(0xffffff, 2.0, 15);
+    const spotL = new THREE.PointLight(0xffffff, 1.5, 12);
     spotL.position.set(-width * 0.35, height * 0.4, 2.0);
-    const spotR = new THREE.PointLight(0xffffff, 2.0, 15);
+    const spotR = new THREE.PointLight(0xffffff, 1.5, 12);
     spotR.position.set(width * 0.35, height * 0.4, 2.0);
     group.add(spotL, spotR);
 

@@ -43,8 +43,8 @@ export class Engine {
     // Systems
     this.input = new Input();
     this.audioEngine = new AudioEngine();
-    this.cameraManager = new CameraManager(this.camera, this.renderer.domElement);
     this.physics = new Physics();
+    this.cameraManager = new CameraManager(this.camera, this.renderer.domElement, this.physics);
     this.weather = new Weather(this.scene, this.renderer);
     this.particleSystem = new ParticleSystem(this.scene);
     this.factory = new ModelFactory();
@@ -159,6 +159,29 @@ export class Engine {
         this.missionManager.toggleTaxiMode(this.player);
       }
     });
+
+    // Player Wasted (death) / Hospital Respawn
+    window.addEventListener('mumbye_player_wasted', () => {
+      // Clear all police heat & despawn active cruisers immediately
+      this.policeSystem.setWantedLevel(0);
+      this.policeSystem.clearPolice();
+
+      setTimeout(() => {
+        const fee = Math.min(this.player.cash, 100);
+        this.player.cash -= fee;
+        // Respawn outside Metro General Hospital (X: 20, Z: -30)
+        this.player.respawn(20, -30);
+        this.cameraManager.yaw = 0;
+        this.cameraManager.pitch = 0.25;
+        this.cameraManager.setMode('on_foot');
+        window.dispatchEvent(new CustomEvent('mumbye_dialog_message', {
+          detail: { 
+            speaker: "Metro General Hospital", 
+            text: `Patient revived & discharged. Medical fee: ₹${fee}. Wanted heat cleared.` 
+          }
+        }));
+      }, 3500);
+    });
   }
 
   start() {
@@ -170,6 +193,13 @@ export class Engine {
   loop() {
     if (!this.isRunning) return;
     requestAnimationFrame(() => this.loop());
+
+    // If Pause Menu is open, render scene without advancing game physics
+    if (this.uiManager?.pauseMenu?.isOpen) {
+      this.uiManager.update(0);
+      this.renderer.render(this.scene, this.camera);
+      return;
+    }
 
     let rawDelta = this.clock.getDelta();
     // Clamp delta to avoid huge physics spikes on tab switch

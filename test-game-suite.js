@@ -24,7 +24,11 @@ async function runTestSuite() {
   // Step 2: Verify HTTP endpoints
   console.log('[2/6] Verifying static endpoints...');
   await testEndpoint('http://localhost:3000/', 200, 'text/html');
-  await testEndpoint('http://localhost:3000/assets/index-aVyZXu1J.css', 200, 'text/css');
+  const distAssets = fs.existsSync(path.join(__dirname, 'dist', 'assets')) ? fs.readdirSync(path.join(__dirname, 'dist', 'assets')) : [];
+  const cssFile = distAssets.find(f => f.endsWith('.css'));
+  if (cssFile) {
+    await testEndpoint(`http://localhost:3000/assets/${cssFile}`, 200, 'text/css');
+  }
   await testEndpoint('http://localhost:3000/dlcs/template-dlc.js', 200, 'application/javascript');
   console.log('  ✅ Static HTTP endpoints respond with 200 OK');
 
@@ -226,6 +230,55 @@ async function runTestSuite() {
     returnByValue: true
   });
   console.log('  ✅ Bollywood Hero DLC Active:', dlcStatus.result.value ? 'Yes' : 'No');
+
+  // Test Action 5: Pause Menu, Full Map & Settings
+  console.log('  👉 Testing Pause Menu & Interactive Map (ESC)...');
+  await sendCommand('Runtime.evaluate', {
+    expression: `window.mumbyeGame.uiManager.pauseMenu.open();`
+  });
+  const pauseStatus = await sendCommand('Runtime.evaluate', {
+    expression: `({
+      isOpen: window.mumbyeGame.uiManager.pauseMenu.isOpen,
+      display: document.getElementById('pause-menu-modal').style.display,
+      hasMapCanvas: !!document.getElementById('full-map-canvas'),
+      fps: window.mumbyeGame.uiManager.pauseMenu.fps
+    })`,
+    returnByValue: true
+  });
+  console.log('  ✅ Pause Menu State:', pauseStatus.result.value);
+  if (!pauseStatus.result.value.isOpen || pauseStatus.result.value.display !== 'flex' || !pauseStatus.result.value.hasMapCanvas) {
+    throw new Error('Pause menu failed to open or render map canvas');
+  }
+
+  // Close pause menu
+  await sendCommand('Runtime.evaluate', {
+    expression: `window.mumbyeGame.uiManager.pauseMenu.close();`
+  });
+  console.log('  ✅ Pause Menu resumed cleanly');
+
+  // Test Action 6: Enforcement Heat & Hospital Respawn
+  console.log('  👉 Testing Metro Enforcement Heat & Hospital Respawn on Wasted...');
+  await sendCommand('Runtime.evaluate', {
+    expression: `window.mumbyeGame.policeSystem.addCrime(3);`
+  });
+  const heatBefore = await sendCommand('Runtime.evaluate', {
+    expression: `window.mumbyeGame.policeSystem.wantedLevel`,
+    returnByValue: true
+  });
+  console.log('  Heat level before death: ' + heatBefore.result.value + ' Stars');
+
+  // Trigger Wasted Event
+  await sendCommand('Runtime.evaluate', {
+    expression: `window.dispatchEvent(new CustomEvent('mumbye_player_wasted'));`
+  });
+  const heatAfter = await sendCommand('Runtime.evaluate', {
+    expression: `window.mumbyeGame.policeSystem.wantedLevel`,
+    returnByValue: true
+  });
+  console.log('  ✅ Heat level immediately upon Hospital intake: ' + heatAfter.result.value + ' Stars (Cleared!)');
+  if (heatAfter.result.value !== 0) {
+    throw new Error('Hospital respawn failed to clear wanted heat');
+  }
 
   // Step 6: Capture Screenshot
   console.log('\n[6/6] Capturing in-game rendered screenshot...');

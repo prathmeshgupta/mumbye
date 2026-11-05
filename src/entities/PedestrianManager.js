@@ -17,7 +17,7 @@ export class PedestrianManager {
     // Bambaiya scream quotes
     this.panicQuotes = [
       "Aila! Bhaago re baba!",
-      "Aye Mama police ko bulao!",
+      "Security ko bulao!",
       "Goli chal raha hai!",
       "Mera dabba gir jayega!",
       "Aye shana mat ban!",

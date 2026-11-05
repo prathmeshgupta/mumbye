@@ -153,8 +153,8 @@ export class PhoneUI {
           <div class="contact-card" id="call-police">
             <div class="contact-avatar">👮</div>
             <div class="contact-info">
-              <div class="contact-name">Mama Police Chowki</div>
-              <div class="contact-sub">Pay Bribe (-₹500)</div>
+              <div class="contact-name">Metro Security Legal</div>
+              <div class="contact-sub">Post Bail Bond (-₹500)</div>
             </div>
             <button class="call-btn">CALL</button>
           </div>
@@ -189,11 +189,11 @@ export class PhoneUI {
         this.game.player.cash -= 500;
         this.game.policeSystem.setWantedLevel(0);
         window.dispatchEvent(new CustomEvent('mumbye_dialog_message', {
-          detail: { speaker: "Mama Police", text: "Chalo mamla settle! Bhaag idhar se abhi!" }
+          detail: { speaker: "Metro Security", text: "Bail bond processed! Wanted status revoked." }
         }));
       } else {
         window.dispatchEvent(new CustomEvent('mumbye_dialog_message', {
-          detail: { speaker: "Mama Police", text: "₹500 nahi hai tere paas? Chal chowki!" }
+          detail: { speaker: "Metro Security", text: "Insufficient funds for bail bond (₹500 required)." }
         }));
       }
     });

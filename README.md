@@ -23,9 +23,9 @@ Everything is finished end-to-end:
 * **Physics & Arcade Driving**:
   * Drift physics, suspension roll and pitch, handbrake slides, tire burnout smoke, nitro boost, and stunt ramps.
   * Vehicle damage, engine smoke, fire, and explosions.
-* **Mumbai Police System ("Mama")**:
-  * 1 to 5 Wanted Stars with authentic police chatter (*"Aye ruk! Kidhar bhaagta hai!"*).
-  * Lathi-wielding Havildars on foot, high-speed Police PCR Gypsies, roadblocks, and tactical response.
+* **Metro Patrol Enforcement System**:
+  * 1 to 5 Wanted Stars with authentic enforcer radio chatter (*"Target spotted! Surround the suspect!"*).
+  * Lathi-wielding guards on foot, high-speed Metro Patrol Cruisers, tactical roadblocks, and sirens.
 * **Pure Web Audio Synthesis Engine**:
   * Zero external sound asset dependencies (no 404s or broken links).
   * Procedurally synthesized vehicle engines (2-stroke rickshaw, taxi carbureted engine, bus diesel rumble, screaming supercar V8).
@@ -35,7 +35,16 @@ Everything is finished end-to-end:
     3. *Marine Drive Chill 92.7* (Arabian Sea Chillwave)
     4. *Dhol Tasha 101.2* (Ganpati Festival High-Energy Beats)
 * **Bambaiya Smartphone**:
-  * Press **`P`** to access Contacts (call fixer Babu Bhaiyya, order Taxis, bribe police), Cheats App, Radio, and DLC Store.
+  * Press **`P`** to access Contacts (call fixer Babu Bhaiyya, order Taxis, post legal bail bond to clear heat), Cheats App, Radio, and DLC Store.
+* **Pause Menu, Full Map & Settings (`ESC`)**:
+  * Interactive full city map with district legend and live player GPS tracker.
+  * Graphics settings: Dynamic shadows toggle, render resolution scale, live FPS counter.
+  * Audio mixer for master, SFX, and radio station volume.
+  * Time of day & weather overrides (Sunrise, Midday, Golden Sunset, Monsoon Storm).
+  * Metro General Hospital respawn with instant wanted heat clearance.
+* **Spring-Arm Collision Camera & Dark Reader Immunity**:
+  * Camera dynamically detects walls and buildings to prevent clipping and getting stuck.
+  * Hardened against browser extensions (e.g. Dark Reader) with `<meta name="darkreader-lock">` and forced color-scheme guards.
 
 ---
 
@@ -157,7 +166,7 @@ c:\Users\pratj\Mumbye\
 │   │   ├── Vehicle.js           # Arcade physics, drifting, damage, sirens
 │   │   ├── TrafficManager.js    # Mumbai ambient traffic AI
 │   │   ├── PedestrianManager.js # Pedestrian AI & dropped cash
-│   │   ├── PoliceSystem.js      # 5-Star Wanted Level & Mumbai Police AI
+│   │   ├── PoliceSystem.js      # 5-Star Wanted Level & Metro Patrol Enforcement AI
 │   │   └── TrainSystem.js       # Moving Mumbai Local Train with horn
 │   ├── missions/
 │   │   ├── MissionManager.js    # Mission state, checkpoints, taxi hustle
@@ -171,6 +180,7 @@ c:\Users\pratj\Mumbye\
 │   └── ui/
 │       ├── UIManager.js         # Master HUD controller
 │       ├── Minimap.js           # Circular GPS radar with rotating arrow
+│       ├── PauseMenu.js         # Interactive Map, Graphics, Audio & Settings
 │       ├── PhoneUI.js           # Bambaiya smartphone with apps & cheats
 │       ├── DLCModal.js          # Interactive in-game DLC manager
 │       └── DialogBox.js         # Dialog subtitles & GTA banners

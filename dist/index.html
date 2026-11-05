@@ -3,10 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="darkreader-lock">
+  <meta name="color-scheme" content="only dark">
   <title>MUMBYE: MAXIMUM CITY - Open World Mumbai GTA Game</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛺</text></svg>">
-  <script type="module" crossorigin src="/assets/index-DLdGwoWF.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-aVyZXu1J.css">
+  <script type="module" crossorigin src="/assets/index-Da_3s1hQ.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-B2I6nPm7.css">
 </head>
 <body>
   <!-- 3D WebGL Canvas Container -->
@@ -20,6 +22,9 @@
 
   <!-- HUD Overlay -->
   <div id="hud-root">
+    <!-- Top-Left: Live Performance FPS Counter -->
+    <div id="hud-fps-counter">60 FPS</div>
+
     <!-- Top-Left: Objective Bar -->
     <div id="objective-bar" style="display: none;">
       <div class="objective-icon">🎯</div>
@@ -50,6 +55,7 @@
       </div>
 
       <div class="hud-quick-buttons">
+        <button id="hud-menu-btn" title="Pause, Map & Settings (ESC)">⚙️ Menu (ESC)</button>
         <button id="hud-phone-btn" title="Open Phone (P)">📱 Phone</button>
         <button id="hud-dlc-btn" title="Open DLC Manager (M)">🧩 DLCs</button>
         <button id="hud-help-btn" title="Controls & Guide">❓ Help</button>
@@ -146,12 +152,16 @@
             <li><b>M:</b> Open DLC & Mod Manager</li>
             <li><b>B:</b> Bhai Time (Slow-Mo Bullet Time)</li>
             <li><b>Tapri (Food Stall):</b> Restores 100 Health for ₹20</li>
-            <li><b>Police:</b> 1-5 Stars; pay bribe via phone or hide in alleys!</li>
+            <li><b>Enforcement:</b> 1-5 Stars; clear heat via legal phone bond or hide in alleys!</li>
+            <li><b>ESC:</b> Pause Menu, Interactive City Map & Graphics Settings</li>
           </ul>
         </div>
       </div>
     </div>
   </div>
+
+  <!-- Master Pause, Map & Settings Modal -->
+  <div id="pause-menu-modal" style="display: none;"></div>
 
   <!-- Touch Controls Overlay for Mobile Browsers -->
   <div id="touch-controls" style="display: none;">
@@ -169,7 +179,7 @@
       <div class="start-features">
         <span>🛺 Auto Rickshaws & Kaali-Peeli Taxis</span>
         <span>🌊 Marine Drive & Sea Link</span>
-        <span>👮 Mumbai Police (Wanted Stars)</span>
+        <span>🚨 Metro Patrol Enforcement (Wanted Stars)</span>
         <span>📻 4 Procedural Radio Stations</span>
         <span>🧩 3 Bundled DLCs & Modder SDK</span>
       </div>

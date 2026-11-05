@@ -1,23 +1,29 @@
-// MUMBYE: MAXIMUM CITY - Third Person & Vehicle Camera System
+// MUMBYE: MAXIMUM CITY - Third Person & Vehicle Camera System (with Spring-Arm Collision Avoidance)
 import * as THREE from 'three';
 
+const _tempCamDir = new THREE.Vector3();
+const _tempDesiredPos = new THREE.Vector3();
+const _tempSafePos = new THREE.Vector3();
+
 export class CameraManager {
-  constructor(camera, domElement) {
+  constructor(camera, domElement, physics = null) {
     this.camera = camera;
     this.domElement = domElement;
+    this.physics = physics;
 
     // Spherical angles
     this.yaw = 0; // horizontal angle in radians
     this.pitch = 0.25; // vertical angle in radians (clamped)
-    this.distance = 5.5; // distance from target
+    this.distance = 5.2; // base distance from target
+    this.currentDistance = 5.2;
     this.target = new THREE.Vector3();
     this.currentPosition = new THREE.Vector3();
 
     // Configuration
-    this.minPitch = -0.3;
+    this.minPitch = -0.35;
     this.maxPitch = 1.35;
     this.sensitivity = 0.0024;
-    this.lerpSpeed = 12.0;
+    this.lerpSpeed = 14.0;
 
     // Modes: 'on_foot', 'in_vehicle', 'aiming', 'cinematic'
     this.mode = 'on_foot';
@@ -31,6 +37,10 @@ export class CameraManager {
 
     this.baseFov = 65;
     this.currentFov = 65;
+  }
+
+  setPhysics(physics) {
+    this.physics = physics;
   }
 
   setTargetPlayer(player) {
@@ -50,8 +60,14 @@ export class CameraManager {
   }
 
   update(delta, input) {
-    // Process mouse look input
+    // Process keyboard & mouse look input
     if (input) {
+      const keyPan = 2.4 * delta;
+      if (input.isKeyDown('ArrowLeft')) this.yaw += keyPan;
+      if (input.isKeyDown('ArrowRight')) this.yaw -= keyPan;
+      if (input.isKeyDown('ArrowUp')) this.pitch = Math.min(this.maxPitch, this.pitch + keyPan * 0.75);
+      if (input.isKeyDown('ArrowDown')) this.pitch = Math.max(this.minPitch, this.pitch - keyPan * 0.75);
+
       this.yaw -= input.mouse.dx * this.sensitivity;
       this.pitch -= input.mouse.dy * this.sensitivity;
       this.pitch = Math.max(this.minPitch, Math.min(this.maxPitch, this.pitch));
@@ -88,26 +104,42 @@ export class CameraManager {
     const eyeHeight = 1.6;
     this.target.set(playerPos.x, playerPos.y + eyeHeight, playerPos.z);
 
-    this.distance = 4.8;
+    const baseDist = 5.0;
     this.currentFov = THREE.MathUtils.lerp(this.currentFov, this.baseFov, delta * 5);
     this.camera.fov = this.currentFov;
     this.camera.updateProjectionMatrix();
 
     // Calculate desired position from spherical coords
     const cosPitch = Math.cos(this.pitch);
-    const offsetX = this.distance * cosPitch * Math.sin(this.yaw);
-    const offsetY = this.distance * Math.sin(this.pitch);
-    const offsetZ = this.distance * cosPitch * Math.cos(this.yaw);
+    const offsetX = baseDist * cosPitch * Math.sin(this.yaw);
+    const offsetY = baseDist * Math.sin(this.pitch);
+    const offsetZ = baseDist * cosPitch * Math.cos(this.yaw);
 
-    const desiredPos = new THREE.Vector3(
+    _tempDesiredPos.set(
       this.target.x + offsetX,
-      Math.max(0.5, this.target.y + offsetY),
+      Math.max(0.6, this.target.y + offsetY),
       this.target.z + offsetZ
     );
 
+    // Spring-Arm obstacle detection
+    _tempCamDir.subVectors(_tempDesiredPos, this.target);
+    const maxRayDist = _tempCamDir.length();
+    _tempCamDir.normalize();
+
+    let targetDistance = maxRayDist;
+    if (this.physics) {
+      const hit = this.physics.raycast(this.target, _tempCamDir, maxRayDist);
+      if (hit.hit && hit.distance > 0.6) {
+        targetDistance = Math.max(1.0, hit.distance - 0.35);
+      }
+    }
+
+    this.currentDistance = THREE.MathUtils.lerp(this.currentDistance, targetDistance, delta * 18.0);
+    _tempSafePos.copy(this.target).addScaledVector(_tempCamDir, this.currentDistance);
+
     // Smooth camera lag
     const factor = Math.min(1.0, delta * this.lerpSpeed);
-    this.currentPosition.lerp(desiredPos, factor);
+    this.currentPosition.lerp(_tempSafePos, factor);
     this.camera.position.copy(this.currentPosition);
     this.camera.lookAt(this.target);
   }
@@ -129,24 +161,24 @@ export class CameraManager {
       playerPos.z - sinYaw * shoulderRight
     );
 
-    this.distance = 2.4;
+    const aimDist = 2.4;
     this.currentFov = THREE.MathUtils.lerp(this.currentFov, 45, delta * 10);
     this.camera.fov = this.currentFov;
     this.camera.updateProjectionMatrix();
 
     const cosPitch = Math.cos(this.pitch);
-    const offsetX = this.distance * cosPitch * Math.sin(this.yaw);
-    const offsetY = this.distance * Math.sin(this.pitch);
-    const offsetZ = this.distance * cosPitch * Math.cos(this.yaw);
+    const offsetX = aimDist * cosPitch * Math.sin(this.yaw);
+    const offsetY = aimDist * Math.sin(this.pitch);
+    const offsetZ = aimDist * cosPitch * Math.cos(this.yaw);
 
-    const desiredPos = new THREE.Vector3(
+    _tempDesiredPos.set(
       this.target.x + offsetX,
-      Math.max(0.5, this.target.y + offsetY),
+      Math.max(0.6, this.target.y + offsetY),
       this.target.z + offsetZ
     );
 
     const factor = Math.min(1.0, delta * (this.lerpSpeed * 1.5));
-    this.currentPosition.lerp(desiredPos, factor);
+    this.currentPosition.lerp(_tempDesiredPos, factor);
     this.camera.position.copy(this.currentPosition);
     this.camera.lookAt(this.target);
   }
@@ -159,38 +191,38 @@ export class CameraManager {
     const vehSpeed = Math.abs(this.targetVehicle.speed || 0);
 
     // Dynamic FOV with speed & nitro
-    const targetFov = this.baseFov + Math.min(25, (vehSpeed / 30) * 20);
+    const targetFov = this.baseFov + Math.min(22, (vehSpeed / 30) * 18);
     this.currentFov = THREE.MathUtils.lerp(this.currentFov, targetFov, delta * 4);
     this.camera.fov = this.currentFov;
     this.camera.updateProjectionMatrix();
 
-    // Auto-align camera behind vehicle if no active mouse movement
-    if (Math.abs(input?.mouse?.dx || 0) < 0.1) {
-      // Gently blend yaw toward vehicle rear
+    // Auto-align camera behind vehicle if no active mouse or keyboard pan
+    const hasPanInput = input && (Math.abs(input.mouse.dx) > 0.1 || input.isKeyDown('ArrowLeft') || input.isKeyDown('ArrowRight'));
+    if (!hasPanInput) {
       const targetYaw = vehRotation + Math.PI;
       let diff = targetYaw - this.yaw;
       while (diff > Math.PI) diff -= Math.PI * 2;
       while (diff < -Math.PI) diff += Math.PI * 2;
-      this.yaw += diff * Math.min(1.0, delta * 3.5);
+      this.yaw += diff * Math.min(1.0, delta * 3.8);
     }
 
     const vehHeight = this.targetVehicle.height || 1.8;
     this.target.set(vehPos.x, vehPos.y + vehHeight * 0.7, vehPos.z);
 
-    const vehicleDist = (this.targetVehicle.type === 'bus') ? 11.0 : (this.targetVehicle.type === 'auto') ? 6.0 : 6.8;
+    const vehicleDist = (this.targetVehicle.type === 'bus') ? 11.0 : (this.targetVehicle.type === 'auto') ? 6.2 : 6.8;
     const cosPitch = Math.cos(Math.max(0.1, this.pitch));
     const offsetX = vehicleDist * cosPitch * Math.sin(this.yaw);
     const offsetY = vehicleDist * Math.sin(Math.max(0.18, this.pitch)) + 1.2;
     const offsetZ = vehicleDist * cosPitch * Math.cos(this.yaw);
 
-    const desiredPos = new THREE.Vector3(
+    _tempDesiredPos.set(
       this.target.x + offsetX,
       Math.max(0.8, this.target.y + offsetY),
       this.target.z + offsetZ
     );
 
-    const factor = Math.min(1.0, delta * 8.0);
-    this.currentPosition.lerp(desiredPos, factor);
+    const factor = Math.min(1.0, delta * 8.5);
+    this.currentPosition.lerp(_tempDesiredPos, factor);
     this.camera.position.copy(this.currentPosition);
     this.camera.lookAt(this.target);
   }
