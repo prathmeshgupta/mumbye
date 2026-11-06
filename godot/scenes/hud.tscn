@@ -1,0 +1,349 @@
+[gd_scene load_steps=6 format=3 uid="uid://e8m3p4v2k1l9x"]
+
+[ext_resource type="Script" path="res://scripts/hud.gd" id="1_hud"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_health"]
+bg_color = Color(0.85, 0.15, 0.15, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_armor"]
+bg_color = Color(0.2, 0.5, 0.95, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+bg_color = Color(0.06, 0.08, 0.12, 0.8)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.9, 0.75, 0.2, 0.7)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_minimap"]
+bg_color = Color(0.04, 0.05, 0.08, 0.9)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.95, 0.8, 0.2, 1)
+corner_radius_top_left = 80
+corner_radius_top_right = 80
+corner_radius_bottom_right = 80
+corner_radius_bottom_left = 80
+
+[node name="HUD" type="CanvasLayer"]
+script = ExtResource("1_hud")
+
+[node name="TopRight" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -300.0
+offset_top = 20.0
+offset_right = -20.0
+offset_bottom = 240.0
+grow_horizontal = 0
+
+[node name="CashContainer" type="HBoxContainer" parent="TopRight"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 36.0
+grow_horizontal = 2
+alignment = 2
+
+[node name="LabelCash" type="Label" parent="TopRight/CashContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.3, 0.95, 0.4, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.8)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 30
+text = "₹00015000"
+
+[node name="StarsContainer" type="HBoxContainer" parent="TopRight"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 38.0
+offset_bottom = 66.0
+grow_horizontal = 2
+alignment = 2
+
+[node name="Star1" type="Label" parent="TopRight/StarsContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "★"
+
+[node name="Star2" type="Label" parent="TopRight/StarsContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "★"
+
+[node name="Star3" type="Label" parent="TopRight/StarsContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "★"
+
+[node name="Star4" type="Label" parent="TopRight/StarsContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "★"
+
+[node name="Star5" type="Label" parent="TopRight/StarsContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "★"
+
+[node name="BarsContainer" type="VBoxContainer" parent="TopRight"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 68.0
+offset_bottom = 104.0
+grow_horizontal = 2
+
+[node name="HealthBar" type="ProgressBar" parent="TopRight/BarsContainer"]
+custom_minimum_size = Vector2(0, 14)
+layout_mode = 2
+theme_override_styles/fill = SubResource("StyleBoxFlat_health")
+value = 100.0
+show_percentage = false
+
+[node name="ArmorBar" type="ProgressBar" parent="TopRight/BarsContainer"]
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+theme_override_styles/fill = SubResource("StyleBoxFlat_armor")
+value = 50.0
+show_percentage = false
+
+[node name="WeaponContainer" type="HBoxContainer" parent="TopRight"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 110.0
+offset_bottom = 145.0
+grow_horizontal = 2
+alignment = 2
+
+[node name="LabelIcon" type="Label" parent="TopRight/WeaponContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "🔫"
+
+[node name="LabelName" type="Label" parent="TopRight/WeaponContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.9, 0.9, 1)
+theme_override_font_sizes/font_size = 16
+text = "Desi 9mm"
+
+[node name="VSeparator" type="VSeparator" parent="TopRight/WeaponContainer"]
+layout_mode = 2
+
+[node name="LabelAmmo" type="Label" parent="TopRight/WeaponContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.2, 1)
+theme_override_font_sizes/font_size = 22
+text = "064"
+
+[node name="LabelClock" type="Label" parent="TopRight"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 150.0
+offset_bottom = 175.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 0.8)
+theme_override_font_sizes/font_size = 18
+text = "14:35"
+horizontal_alignment = 2
+
+[node name="BottomLeft" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 25.0
+offset_top = -185.0
+offset_right = 185.0
+offset_bottom = -25.0
+grow_vertical = 0
+
+[node name="MinimapContainer" type="SubViewportContainer" parent="BottomLeft"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="SubViewport" type="SubViewport" parent="BottomLeft/MinimapContainer"]
+handle_input_locally = false
+size = Vector2i(160, 160)
+render_target_update_mode = 4
+
+[node name="MinimapCamera" type="Camera3D" parent="BottomLeft/MinimapContainer/SubViewport"]
+transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, 0, 90, 0)
+projection = 1
+size = 160.0
+
+[node name="PlayerIcon" type="TextureRect" parent="BottomLeft/MinimapContainer"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -10.0
+offset_top = -10.0
+offset_right = 10.0
+offset_bottom = 10.0
+grow_horizontal = 2
+grow_vertical = 2
+pivot_offset = Vector2(10, 10)
+
+[node name="LabelArrow" type="Label" parent="BottomLeft/MinimapContainer/PlayerIcon"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 0.9, 0.1, 1)
+theme_override_font_sizes/font_size = 18
+text = "▲"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="RadarBorder" type="Panel" parent="BottomLeft"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_minimap")
+
+[node name="BottomRight" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -280.0
+offset_top = -120.0
+offset_right = -25.0
+offset_bottom = -25.0
+grow_horizontal = 0
+grow_vertical = 0
+
+[node name="SpeedoPanel" type="PanelContainer" parent="BottomRight"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="VBox" type="VBoxContainer" parent="BottomRight/SpeedoPanel"]
+layout_mode = 2
+alignment = 1
+
+[node name="LabelSpeed" type="Label" parent="BottomRight/SpeedoPanel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.2, 1)
+theme_override_font_sizes/font_size = 28
+text = "000 KM/H"
+horizontal_alignment = 1
+
+[node name="LabelRadio" type="Label" parent="BottomRight/SpeedoPanel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.85, 1, 1)
+theme_override_font_sizes/font_size = 13
+text = "📻 93.5 Red FM"
+horizontal_alignment = 1
+
+[node name="NotificationPanel" type="PanelContainer" parent="."]
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -220.0
+offset_top = 35.0
+offset_right = 220.0
+offset_bottom = 85.0
+grow_horizontal = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="LabelNotification" type="Label" parent="NotificationPanel"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 15
+text = "Notification"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="CenterReticle" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -10.0
+offset_top = -10.0
+offset_right = 10.0
+offset_bottom = 10.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Dot" type="ColorRect" parent="CenterReticle"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -2.0
+offset_top = -2.0
+offset_right = 2.0
+offset_bottom = 2.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(1, 1, 1, 0.85)
+
+[node name="PromptPanel" type="PanelContainer" parent="."]
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -180.0
+offset_top = -75.0
+offset_right = 180.0
+offset_bottom = -35.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="LabelPrompt" type="Label" parent="PromptPanel"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.9, 0.2, 1)
+theme_override_font_sizes/font_size = 16
+text = "[E] Drive Kaali-Peeli Taxi"
+horizontal_alignment = 1
+vertical_alignment = 1

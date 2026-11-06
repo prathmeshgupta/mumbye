@@ -64,10 +64,18 @@ Everything is finished end-to-end:
 
 ## 🚀 Quick Start
 
-### Option A: Standalone Windows Executable (.exe)
+### 🏎️ NEW: Mumbye Godot 4.3 3D Edition (Vice City / San Andreas Grade)
+Double-click **`run_godot.bat`** directly from the root of this repository.
+* 🚀 **120–180+ FPS GPU Native Performance**: Zero browser overhead, native AMD/Nvidia OpenGL ES 3.0 / WebGL 2.0 Compatibility renderer.
+* 📷 **GTA-Style `SpringArm3D` Camera**: Collision raycasting with sphere margin prevents camera from ever clipping into walls or buildings.
+* 🛺 **Real `VehicleBody3D` Physics**: True 4-wheel independent suspension, tire friction slip, handbrake powerslides/drifting, and dynamic chase camera with high-speed FOV rush.
+* 🌆 **Sunny Mumbai High-Key Graphics**: Marine Drive 6-lane coastal boulevard, tetrapod seawall, Gateway of India monument, Bandra-Worli Sea Link cable-stayed bridge, historic Colaba chawls, and BKC glass skyscrapers.
+* 🎶 **Zero-Dependency Procedural Audio**: Algorithmic engine revs, tire screeches, horns, gunshots, cash chimes, and radio stations.
+
+### Option A: Standalone Windows Webview Executable (.exe)
 Double-click **`Mumbye.exe`** directly from the root of this repository (or download it from [GitHub Releases](https://github.com/prathmeshgupta/mumbye/releases)).
 * ⚡ No Node.js or npm required!
-* 🖥️ Runs in a dedicated, high-performance 60+ FPS desktop window with native pointer lock, audio synthesis, and DLC support.
+* 🖥️ Runs in a dedicated, hardware-accelerated desktop window.
 
 ### Option B: Run via Node / Web Browser
 ```bash

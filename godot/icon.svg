@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <rect width="128" height="128" rx="16" fill="#1a1c23"/>
+  <circle cx="64" cy="50" r="32" fill="#f59e0b"/>
+  <path d="M 20 110 L 40 70 L 64 85 L 88 70 L 108 110 Z" fill="#0284c7"/>
+  <text x="64" y="118" font-family="Arial, sans-serif" font-weight="900" font-size="14" fill="#fbbf24" text-anchor="middle" letter-spacing="2">MUMBYE</text>
+</svg>
